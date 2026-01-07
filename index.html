@@ -81,11 +81,11 @@ const END_ROUND_TIME = 3
 
 const BUTTON_HEIGHT = 50
 const BUTTONS = [
-  { x:350,y:550,w:100,name:"ROLL",status:()=>context.phase.name==="roll",
+  { x:350,y:550,w:100,name:"ROLAR",status:()=>context.phase.name==="roll",
     effect:()=>{
       rollPlayer(context)
   }},
-  { x:350,y:550,w:100,name:"PASS",status:()=>context.phase.name==="decision",
+  { x:350,y:550,w:100,name:"ATACAR",status:()=>context.phase.name==="decision",
     effect:()=>{
       resolveTurn(context)
   }}
@@ -146,15 +146,49 @@ const ENEMY_DRAW = [
     ctx.fillStyle="white";
     ctx.fillRect(x+w/2-head/2+2,y+h-body-head-foot,2,2)
     ctx.fillRect(x+w/2+head/2-2,y+h-body-head-foot,2,2)
+  },
+  (x,y,w,h)=> {
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.fillStyle="#f00";
+    ctx.fillRect(6, 18, 6, 6);
+    ctx.fillRect(12, 18, 6, 6);
+    ctx.fillRect(12, 12, 6, 6);
+    ctx.fillRect(18, 12, 6, 6);
+    ctx.fillRect(18, 18, 6, 6);
+    ctx.fillRect(24, 18, 6, 6);
+    ctx.fillRect(24, 24, 6, 6);
+    ctx.fillRect(24, 30, 6, 6);
+    ctx.fillRect(24, 36, 6, 6);
+    ctx.fillRect(30, 36, 6, 6);
+    ctx.fillRect(36, 36, 6, 6);
+    ctx.fillRect(42, 36, 6, 6);
+    ctx.fillRect(42, 42, 6, 6);
+    ctx.fillRect(36, 42, 6, 6);
+    ctx.fillRect(30, 42, 6, 6);
+    ctx.fillRect(24, 42, 6, 6);
+    ctx.fillRect(30, 48, 6, 6);
+    ctx.fillRect(42, 48, 6, 6);
+    ctx.fillRect(18, 42, 6, 6);
+    ctx.fillRect(42, 30, 6, 6);
+    ctx.fillRect(42, 24, 6, 6);
+    ctx.fillRect(42, 18, 6, 6);
+    ctx.fillRect(48, 18, 6, 6);
+    ctx.fillStyle="#fff";
+    ctx.fillRect(15, 15, 3, 3);
+    ctx.fillRect(9, 24, 3, 3);
+    ctx.fillRect(15, 24, 3, 3);
+    ctx.fillRect(18, 12, 3, 3);
+    ctx.restore();
   }
 ]
 function newEnemy() {
   if (Math.random()<0.5) {
     const v=rand(1,DICE_SIZE);
-    return {min:v,max:v,hp:1,draw:ENEMY_DRAW[0]};
+    return {min:v,max:v,hp:1,draw:ENEMY_DRAW[rand(0,ENEMY_DRAW.length-1)]};
   }
   let a=rand(1,DICE_SIZE-1), b=rand(a+1,a+3);
-  return {min:a,max:Math.min(b,DICE_SIZE),hp:1,draw:ENEMY_DRAW[0]};
+  return {min:a,max:Math.min(b,DICE_SIZE),hp:1,draw:ENEMY_DRAW[rand(0,ENEMY_DRAW.length-1)]};
 }
 
 function spawnEnemies(ctx) {

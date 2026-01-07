@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Pixel Drawer</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    textarea { width: 400px; height: 200px; font-family: monospace; }
+  </style>
+</head>
+<body>
+
+  <h2>Pixel Drawer</h2>
+  <div style="display: flex;">
+    <div style="flex:1"></div>
+    <div style="flex:1">
+      Segure <strong>SHIFT</strong> para apagar
+      <canvas id="canvas" width="336" height="336" style="background:black; cursor:pointer; border:1px solid #444;"></canvas>
+      <div style="display:flex">
+        <div style="flex:1">
+          <div>Tamanho do quadrado: </div>
+          <input type="number" id="size" value="4" min="1" max="56" style="width:60px;">
+        </div>
+        <div style="flex:1">
+          <div>Cor: </div>
+          <input type="text" value="fff" id="color" style="width:60px;">
+        </div>
+      </div>
+    </div>
+    <textarea id="output" placeholder="// fillRect aparecerá aqui"></textarea>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const sizeInput = document.getElementById("size");
+    const output = document.getElementById("output");
+    const colorInput = document.getElementById("color");
+    var lastColor = '#fff'
+
+    const P_SIZE = 56;
+
+    let size = Number(sizeInput.value);
+    let drawn = new Set(); 
+
+    sizeInput.addEventListener('change', () => {
+      size = Number(sizeInput.value);
+      redrawCanvas();
+    });
+    output.addEventListener('change', () => {
+      console.log('change');
+      let parts = output.value.split("\n");
+      drawn = new Set(parts);
+      redrawCanvas();
+    });
+
+// Desenha o grid vermelho
+    function drawGrid() {
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 0.5;
+      const scaleWidth = size * canvas.width/P_SIZE;
+      for (let x = 0; x <= canvas.width; x += scaleWidth) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= canvas.height; y += scaleWidth) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+
+// redesenha tudo
+    function redrawCanvas() {
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // desenha pixels pintados
+      ctx.fillStyle = "#fff";
+      drawn.forEach(cmd => {
+        if(cmd.includes('fillStyle')) {
+          const parts = cmd.split('=');
+          ctx.fillStyle=parts[1];
+        } else {
+          const parts = cmd.match(/\d+/g).map(Number);
+          const ratio = canvas.width/P_SIZE
+          ctx.fillRect(parts[0]*ratio, parts[1]*ratio, parts[2]*ratio, parts[3]*ratio);
+        }
+      });
+
+      drawGrid();
+    }
+
+// clique pinta ou apaga
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = P_SIZE/canvas.width
+      const clickX = (e.clientX - rect.left);
+      const clickY = (e.clientY - rect.top);
+
+      const x = Math.floor(clickX*ratio/size);
+      const y = Math.floor(clickY*ratio/size);
+
+      const color = '#'+colorInput.value;
+      if(color !== lastColor) {
+        lastColor = color;
+        drawn.add(`ctx.fillStyle=${color}`)
+      }
+
+      const cmd = `ctx.fillRect(${x*size}, ${y*size}, ${size}, ${size});`;
+
+      if (e.shiftKey) {
+        for(const item of drawn) {
+          const parts = item.match(/\d+/g).map(Number);
+          if(clickX*ratio >= parts[0] && clickX*ratio <= parts[0]+parts[2]) {
+            if(clickY*ratio >= parts[1] && clickY*ratio <= parts[1]+parts[3]) {
+              drawn.delete(item);
+              break;
+            }
+          }
+        }
+      } else {
+        drawn.add(cmd);
+      }
+
+      redrawCanvas();
+      output.value = [...drawn].join("\n");
+    });
+
+// desenha primeira vez
+    redrawCanvas();
+  </script>
+
+</body>
+</html>
