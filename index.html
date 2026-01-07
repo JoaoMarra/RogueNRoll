@@ -159,7 +159,7 @@ function newEnemy() {
 
 function spawnEnemies(ctx) {
   ctx.enemies=[];
-  let amount = 1;//rand(ctx.level,3+ctx.level)
+  let amount = rand(ctx.level,3+ctx.level)
   for(let i=0;i<amount;i++)
     ctx.enemies.push(newEnemy());
   log("Inimigos gerados:", ctx.enemies.length);
