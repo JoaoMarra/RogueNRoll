@@ -82,7 +82,7 @@
       ctx.fillStyle = "#fff";
       drawn.forEach(cmd => {
         if(cmd.includes('fillStyle')) {
-          const parts = cmd.split('=');
+          const parts = cmd.split('"');
           ctx.fillStyle=parts[1];
         } else {
           const parts = cmd.match(/\d+/g).map(Number);
@@ -107,7 +107,7 @@
       const color = '#'+colorInput.value;
       if(color !== lastColor) {
         lastColor = color;
-        drawn.add(`ctx.fillStyle=${color}`)
+        drawn.add(`ctx.fillStyle="${color}";`)
       }
 
       const cmd = `ctx.fillRect(${x*size}, ${y*size}, ${size}, ${size});`;
