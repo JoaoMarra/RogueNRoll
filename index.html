@@ -60,12 +60,11 @@
 
     const GAME_WIDTH = 800
     const GAME_HEIGHT = 600
-    const DICE_SIZE = 6
     const BACKGROUND_COLOR = '#222'
 
     const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 
-    const normalize = (a)=>{while(a < 0) a+= DICE_SIZE;a = a % DICE_SIZE; if(a==0) a = DICE_SIZE; return a}
+    const normalize = (a)=>{while(a < 0) a+= 6;a = a % 6; if(a==0) a = 6; return a}
 
     const GAME_PHASES = [
       {name:"roll", desc: "Rolar dado"},
@@ -100,17 +99,19 @@
         }
       }
     ]
+    var DESCRIPTION = null;
+    var SCORE = 0;
 
 /* ================== CARDS ================== */
     const AC_CARDS = [
-      { name:"+1", effect:(ctx) => ctx.calcValue+1 },
-      { name:"+2", effect:(ctx) => ctx.calcValue+2 },
-      { name:"-1", effect:(ctx) => ctx.calcValue-1 },
-      { name:"-2", effect:(ctx) => ctx.calcValue-2 },
-      { name:`set ${Math.ceil(DICE_SIZE/2)}`, effect:(ctx) => Math.ceil(DICE_SIZE/2) },
-      { name:"set 1", effect:(ctx) => 1 },
-      { name:`set ${DICE_SIZE}`, effect:(ctx) => DICE_SIZE },
-      { name:"Rouba vida", effect:(ctx) => {ctx.shield += ctx.calcValue; return ctx.calcValue }},
+      { name:"+1", effect:(ctx) => ctx.calcValue+1, description: "+1 no valor de ataque" },
+      { name:"+2", effect:(ctx) => ctx.calcValue+2, description: "+2 no valor de ataque" },
+      { name:"-1", effect:(ctx) => ctx.calcValue-1, description: "-1 no valor de ataque" },
+      { name:"-2", effect:(ctx) => ctx.calcValue-2, description: "-2 no valor de ataque" },
+      { name:"set 3", effect:(ctx) => 3, description: "valor de ataque definido para 3" },
+      { name:"set 1", effect:(ctx) => 1, description: "valor de ataque definido para 1" },
+      { name:"set 6", effect:(ctx) => 6, description: "valor de ataque definido para 6" },
+      { name:"Rouba vida", effect:(ctx) => {ctx.shield += ctx.calcValue; return ctx.calcValue }, description: "ganha escudo de acordo com o valor de ataque"},
     ]
     function newActiveCard() {
       const c = AC_CARDS[rand(0,AC_CARDS.length-1)];
@@ -118,17 +119,17 @@
       return { ...c, used:false };
     }
     const PC_CARDS = [
-      { name:"Sempre +1", effect:(ctx) => ctx.calcValue+1,time:ROLL_TIME },
-      { name:"Sempre -1", effect:(ctx) => ctx.calcValue-1, time:ROLL_TIME },
-      { name:"Par +1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue+1:ctx.calcValue, time:ROLL_TIME },
-      { name:"Impar +1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue:ctx.calcValue+1, time:ROLL_TIME },
-      { name:"Par -1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue-1:ctx.calcValue, time:ROLL_TIME },
-      { name:"Impar -1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue:ctx.calcValue-1, time:ROLL_TIME },
-      { name:"Barreira +1", effect:(ctx) => ctx.enemyRoll-1, time:ENEMY_TIME },
-      { name:"Escudo +1", effect:(ctx) => ctx.shield+=1, time:END_ROUND_TIME },
-      { name:"Rouba alma", effect:(ctx) => ctx.shield+=ctx.turnKill, time:END_TURN_TIME },
-      { name:"Level +1", effect:(ctx) => ctx.level+=1, time:END_ROUND_TIME },
-      { name:"Gambler", effect:(ctx) => refreshCards(ctx,1), time:END_TURN_TIME }
+      { name:"Sempre +1", effect:(ctx) => ctx.calcValue+1,time:ROLL_TIME, description: "+1 no valor do dado" },
+      { name:"Sempre -1", effect:(ctx) => ctx.calcValue-1, time:ROLL_TIME, description: "-1 no valor do dado" },
+      { name:"Par +1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue+1:ctx.calcValue, time:ROLL_TIME, description: "+1 no valor do dado, se ele for par" },
+      { name:"Impar +1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue:ctx.calcValue+1, time:ROLL_TIME, description: "+1 no valor do dado, se ele for impar" },
+      { name:"Par -1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue-1:ctx.calcValue, time:ROLL_TIME, description: "-1 no valor do dado, se ele for par" },
+      { name:"Impar -1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue:ctx.calcValue-1, time:ROLL_TIME, description: "-1 no valor do dado, se ele for impar" },
+      { name:"Barreira +1", effect:(ctx) => ctx.enemyRoll-1, time:ENEMY_TIME, description: "-1 no valor do dano dos inimigos" },
+      { name:"Escudo +1", effect:(ctx) => ctx.shield+=1, time:END_ROUND_TIME, description: "+1 de escudo ao final da fase" },
+      { name:"Rouba alma", effect:(ctx) => ctx.shield+=ctx.turnKill, time:END_TURN_TIME, description: "+1 de escudo para cada inimigo derrotado" },
+      { name:"Level +1", effect:(ctx) => ctx.level+=1, time:END_ROUND_TIME, description: "+1 nivel no final da fase" },
+      { name:"Gambler", effect:(ctx) => refreshCards(ctx,1), time:END_TURN_TIME, description: "troca uma carta aleatória ao final de cada turno" }
     ]
     function newPassiveCard() {
       let c = PC_CARDS[rand(0,PC_CARDS.length-1)];
@@ -253,11 +254,11 @@
     ]
     function newEnemy() {
       if (Math.random()<0.5) {
-        const v=rand(1,DICE_SIZE);
+        const v=rand(1,6);
         return {min:v,max:v,hp:1,draw:ENEMY_DRAW[rand(0,ENEMY_DRAW.length-1)]};
       }
-      let a=rand(1,DICE_SIZE-1), b=rand(a+1,a+3);
-      return {min:a,max:Math.min(b,DICE_SIZE),hp:1,draw:ENEMY_DRAW[rand(0,ENEMY_DRAW.length-1)]};
+      let a=rand(1,5), b=rand(a+1,a+3);
+      return {min:a,max:Math.min(b,6),hp:1,draw:ENEMY_DRAW[rand(0,ENEMY_DRAW.length-1)]};
     }
 
     function spawnEnemies(ctx) {
@@ -305,7 +306,7 @@
     function rollPlayer(ctx) {
       ctx.passedTurn = false;
 
-      ctx.rollValue = rand(1,DICE_SIZE);
+      ctx.rollValue = rand(1,6);
       ctx.calcValue = ctx.rollValue;
       log("Jogador rolou:", ctx.rollValue);
 
@@ -366,6 +367,8 @@
           ctx.turnKill += 1;
         }
       });
+
+      SCORE += ctx.turnKill*ctx.level*(50*ctx.turnKill);
 
       context.enemies=context.enemies.filter(e=>e.hp>0);
 
@@ -473,6 +476,54 @@
 
     });
 
+    canvas.addEventListener("mousemove",e=>{
+      DESCRIPTION = null;
+      const cx=e.clientX,cy=e.clientY;
+
+      let i=0;
+      for(const c of Object.values(context.passiveCards)) {
+        const x = 20;
+        const y = 50+i*60;
+        const w = 160;
+        const h = 50;
+
+        if(cx >= x && cx <= x+w && cy >= y && cy <= y+h) {
+          DESCRIPTION = {
+            'x':cx,
+            'y':cy,
+            'label':c.description
+          }
+          break;
+        }
+
+        i++;
+      }
+      i=0;
+
+      const bhScaled = BUTTON_HEIGHT * canvas.height/GAME_HEIGHT;
+      let c_b_y=canvas.height-170-bhScaled
+      for(const c of context.activeCards) {
+        const x=canvas.width/2-160+i*110;
+        let y = c_b_y;
+        if(context.phase.name == "decision" && !c.used) {
+          y -= 30;
+        }
+        const w = 100;
+        const h = 120;
+
+        if(cx >= x && cx <= x+w && cy >= y && cy <= y+h) {
+          DESCRIPTION = {
+            'x':cx,
+            'y':cy,
+            'label':c.description
+          }
+          break;
+        }
+
+        i++;
+      };
+    });
+
 /* ================== DRAW ================== */
     function draw() {
       const bhScaled = BUTTON_HEIGHT * canvas.height/GAME_HEIGHT;
@@ -483,8 +534,12 @@
   // Phase label
       ctx.font="22px Arial";
       ctx.fillStyle="#f5f5f5";
-      const label=context.phase.desc;
+      let label=context.phase.desc;
       ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, 40);
+      ctx.font="18px Arial";
+      ctx.fillStyle="#faefb6";
+      label=SCORE;
+      ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, 62);
 
   // Passives
       Object.values(context.passiveCards).forEach((p,i)=>{
@@ -553,14 +608,14 @@
       if(context.rollValue) {
         ctx.font="18px Arial";
         ctx.fillStyle="#777";
-        const label=context.rollValue;
+        label=context.rollValue;
         ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, canvas.height-55-bhScaled);
       }
 
       if(previewValue) {
         ctx.font="22px Arial";
         ctx.fillStyle="#000";
-        const label=previewValue;
+        label=previewValue;
         ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, canvas.height-20-bhScaled);
       }
 
@@ -612,6 +667,7 @@
         ctx.fillText(line, logX+10, logY+20+i*14);
       });
 
+  // GAME OVER
       if(context.phase && context.phase.name==="gameover") {
         ctx.fillStyle="#000";
         ctx.fillRect(canvas.width/2-140, canvas.height/2-40, 280, 50);
@@ -620,6 +676,17 @@
         ctx.fillText("GAME OVER",canvas.width/2-120,canvas.height/2);
       } else {
         requestAnimationFrame(draw);
+      }
+
+  // DESCRIPTION
+      if(DESCRIPTION != null) {
+        ctx.font="20px Arial";
+        const dsize = ctx.measureText(DESCRIPTION.label).width;
+        ctx.fillStyle="#000";
+
+        ctx.fillRect(DESCRIPTION.x, DESCRIPTION.y, dsize+8, 30);
+        ctx.fillStyle="#fff";
+        ctx.fillText(DESCRIPTION.label,DESCRIPTION.x+4, DESCRIPTION.y+20);
       }
 
     }
