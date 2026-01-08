@@ -2,6 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rogue N'Roll</title>
   <style>
     body {
@@ -15,718 +16,748 @@
   </style>
 </head>
 <body>
+  <div style="display: flex; flex-direction:column;">
+    <canvas id="game"></canvas>
+    <textarea id="log" readonly style="background:#000; color: #0f0; border-color: #0f0; border-style: solid; border-width: 2px; height: 100px;"></textarea>
+  </div>
+</body>
 
-  <canvas id="game"></canvas>
+<script>
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const logArea = document.getElementById("log");
 
-  <script>
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
+  const GAME_WIDTH = 800;
+  const GAME_HEIGHT = 600;
+  const BUTTON_HEIGHT = 50
 
-    function resize() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener("resize", resize);
-    resize();
+  var VERTICAL = canvas.width < canvas.height;
+  var BUTTON_H_SCALED = BUTTON_HEIGHT * canvas.height/GAME_HEIGHT;
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight-logArea.clientHeight;
+    VERTICAL = canvas.width < canvas.height;
+    BUTTON_H_SCALED = BUTTON_HEIGHT * canvas.height/GAME_HEIGHT;
+  }
+  window.addEventListener("resize", resize);
+  resize();
 
 /* ================== LOG SYSTEM ================== */
-    const logLines = [];
-    const MAX_LOGS = 50;
+  const logLines = [];
+  const MAX_LOGS = 50;
 
-    function log(msg, data = null) {
-      const text = data ? `${msg} ${JSON.stringify(data)}` : msg;
-      console.log("[GAME]", text);
-      logLines.push(text);
-      if (logLines.length > MAX_LOGS) logLines.shift();
-    }
+  function log(msg, data = null) {
+    const text = data ? `${msg} ${JSON.stringify(data)}` : msg;
+    console.log("[GAME]", text);
+    logLines.push(text);
+    if (logLines.length > MAX_LOGS) logLines.shift();
+
+    logArea.value = [...logLines].join("\n");
+    logArea.scrollTop = logArea.scrollHeight;
+  }
 
 /* ================== CONTEXT ================== */
-    const context = {
-      level : 1,
-      shield : 10,
-      rollValue: null,
-      calcValue: null,
-      phase: null,
-      passedTurn: false,
-      activeCards: [],
-      passiveCards: {},
-      enemies: [],
-      turnKill: 0,
-      enemyRoll:null,
-      playCards: []
-    };
+  const context = {
+    level : 1,
+    shield : 10,
+    rollValue: null,
+    calcValue: null,
+    phase: null,
+    passedTurn: false,
+    activeCards: [],
+    passiveCards: {},
+    enemies: [],
+    turnKill: 0,
+    enemyRoll:null,
+    playCards: []
+  };
 
 /* ================== UTILS ================== */
 
-    const GAME_WIDTH = 800
-    const GAME_HEIGHT = 600
-    const BACKGROUND_COLOR = '#222'
+  const BACKGROUND_COLOR = '#222'
 
-    const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+  const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 
-    const normalize = (a)=>{while(a < 0) a+= 6;a = a % 6; if(a==0) a = 6; return a}
+  const normalize = (a)=>{while(a < 0) a+= 6;a = a % 6; if(a==0) a = 6; return a}
 
-    const GAME_PHASES = [
-      {name:"roll", desc: "Rolar dado"},
-      {name:"decision", desc: "Escolha carta ou continue"},
-      {name:"enemy", desc: "Ataque do inimigo"},
-      {name:"gameover", desc: "Fim de jogo"},
-    ];
+  const GAME_PHASES = [
+    {name:"roll", desc: "Rolar dado"},
+    {name:"decision", desc: "Escolha carta ou continue"},
+    {name:"enemy", desc: "Ataque do inimigo"},
+    {name:"gameover", desc: "Fim de jogo"},
+  ];
 
-    const ROLL_TIME = 0
-    const ENEMY_TIME = 1
-    const END_TURN_TIME = 2
-    const END_ROUND_TIME = 3
+  const ROLL_TIME = 0
+  const ENEMY_TIME = 1
+  const END_TURN_TIME = 2
+  const END_ROUND_TIME = 3
 
-    const BUTTON_HEIGHT = 50
-    const BUTTONS = [
-      { x:350,y:550,w:100,name:()=>"ROLAR",status:()=>context.phase.name==="roll",
-        color:'#2a2',
-        effect:()=>{
-          rollPlayer(context)
-        }
-      },
-      { x:350,y:550,w:100,name:()=>"ATACAR",status:()=>context.phase.name==="decision",
-        color:'#2a2',
-        effect:()=>{
-          resolveTurn(context)
-        }
-      },
-      { x:350,y:550,w:100,name:(ctx)=>`DEFENDER ${ctx.enemyRoll}`,status:()=>context.phase.name==="enemy",
-        color:'#c70a0a',
-        effect:()=>{
-          resolveEnemyTurn(context)
-        }
+  const BUTTONS = [
+    { x:310,y:550,w:180,name:()=>"ROLAR",status:()=>context.phase.name==="roll",
+      color:'#2a2',
+      effect:()=>{
+        rollPlayer(context)
       }
-    ]
-    var DESCRIPTION = null;
-    var SCORE = 0;
+    },
+    { x:310,y:550,w:180,name:()=>"ATACAR",status:()=>context.phase.name==="decision",
+      color:'#2a2',
+      effect:()=>{
+        resolveTurn(context)
+      }
+    },
+    { x:310,y:550,w:180,name:(ctx)=>`DEFENDER ${ctx.enemyRoll}`,status:()=>context.phase.name==="enemy",
+    color:'#c70a0a',
+    effect:()=>{
+      resolveEnemyTurn(context)
+    }
+  }
+]
+var DESCRIPTION = null;
+var SCORE = 0;
+const ENEMY_POINT = 15;
 
 /* ================== CARDS ================== */
-    const AC_CARDS = [
-      { name:"+1", effect:(ctx) => ctx.calcValue+1, description: "+1 no valor de ataque" },
-      { name:"+2", effect:(ctx) => ctx.calcValue+2, description: "+2 no valor de ataque" },
-      { name:"-1", effect:(ctx) => ctx.calcValue-1, description: "-1 no valor de ataque" },
-      { name:"-2", effect:(ctx) => ctx.calcValue-2, description: "-2 no valor de ataque" },
-      { name:"set 3", effect:(ctx) => 3, description: "valor de ataque definido para 3" },
-      { name:"set 1", effect:(ctx) => 1, description: "valor de ataque definido para 1" },
-      { name:"set 6", effect:(ctx) => 6, description: "valor de ataque definido para 6" },
-      { name:"Rouba vida", effect:(ctx) => {ctx.shield += ctx.calcValue; return ctx.calcValue }, description: "ganha escudo de acordo com o valor de ataque"},
-    ]
-    function newActiveCard() {
-      const c = AC_CARDS[rand(0,AC_CARDS.length-1)];
-      log("Nova carta ativa:", c.name);
-      return { ...c, used:false };
-    }
-    const PC_CARDS = [
-      { name:"Sempre +1", effect:(ctx) => ctx.calcValue+1,time:ROLL_TIME, description: "+1 no valor do dado" },
-      { name:"Sempre -1", effect:(ctx) => ctx.calcValue-1, time:ROLL_TIME, description: "-1 no valor do dado" },
-      { name:"Par +1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue+1:ctx.calcValue, time:ROLL_TIME, description: "+1 no valor do dado, se ele for par" },
-      { name:"Impar +1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue:ctx.calcValue+1, time:ROLL_TIME, description: "+1 no valor do dado, se ele for impar" },
-      { name:"Par -1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue-1:ctx.calcValue, time:ROLL_TIME, description: "-1 no valor do dado, se ele for par" },
-      { name:"Impar -1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue:ctx.calcValue-1, time:ROLL_TIME, description: "-1 no valor do dado, se ele for impar" },
-      { name:"Barreira +1", effect:(ctx) => ctx.enemyRoll-1, time:ENEMY_TIME, description: "-1 no valor do dano dos inimigos" },
-      { name:"Escudo +1", effect:(ctx) => ctx.shield+=1, time:END_ROUND_TIME, description: "+1 de escudo ao final da fase" },
-      { name:"Rouba alma", effect:(ctx) => ctx.shield+=ctx.turnKill, time:END_TURN_TIME, description: "+1 de escudo para cada inimigo derrotado" },
-      { name:"Level +1", effect:(ctx) => ctx.level+=1, time:END_ROUND_TIME, description: "+1 nivel no final da fase" },
-      { name:"Gambler", effect:(ctx) => refreshCards(ctx,1), time:END_TURN_TIME, description: "troca uma carta aleatória ao final de cada turno" }
-    ]
-    function newPassiveCard() {
-      let c = PC_CARDS[rand(0,PC_CARDS.length-1)];
-      if(context.passiveCards[c.name]) {
-        context.passiveCards[c.name].amount += 1;
-      } else {
-        c = { ...c, amount:1}
-        context.passiveCards[c.name] = c;
-      }
-      return c;
-    }
+const AC_CARDS = [
+  { name:"+1", effect:(ctx) => ctx.calcValue+1, description: "+1 no valor de ataque" },
+  { name:"+2", effect:(ctx) => ctx.calcValue+2, description: "+2 no valor de ataque" },
+  { name:"-1", effect:(ctx) => ctx.calcValue-1, description: "-1 no valor de ataque" },
+  { name:"-2", effect:(ctx) => ctx.calcValue-2, description: "-2 no valor de ataque" },
+  { name:"set 3", effect:(ctx) => 3, description: "valor de ataque definido para 3" },
+  { name:"set 1", effect:(ctx) => 1, description: "valor de ataque definido para 1" },
+  { name:"set 6", effect:(ctx) => 6, description: "valor de ataque definido para 6" },
+  { name:"Rouba vida", effect:(ctx) => {ctx.shield += ctx.calcValue; return ctx.calcValue }, description: "ganha escudo de acordo com o valor de ataque"},
+]
+function newActiveCard() {
+  const c = AC_CARDS[rand(0,AC_CARDS.length-1)];
+  log("Nova carta ativa:", c.name);
+  return { ...c, used:false };
+}
+const PC_CARDS = [
+  { name:"Sempre +1", effect:(ctx) => ctx.calcValue+1,time:ROLL_TIME, description: "+1 no valor do dado" },
+  { name:"Sempre -1", effect:(ctx) => ctx.calcValue-1, time:ROLL_TIME, description: "-1 no valor do dado" },
+  { name:"Par +1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue+1:ctx.calcValue, time:ROLL_TIME, description: "+1 no valor do dado, se ele for par" },
+  { name:"Impar +1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue:ctx.calcValue+1, time:ROLL_TIME, description: "+1 no valor do dado, se ele for impar" },
+  { name:"Par -1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue-1:ctx.calcValue, time:ROLL_TIME, description: "-1 no valor do dado, se ele for par" },
+  { name:"Impar -1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue:ctx.calcValue-1, time:ROLL_TIME, description: "-1 no valor do dado, se ele for impar" },
+  { name:"Barreira +1", effect:(ctx) => ctx.enemyRoll-1, time:ENEMY_TIME, description: "-1 no valor do dano dos inimigos" },
+  { name:"Escudo +1", effect:(ctx) => ctx.shield+=1, time:END_ROUND_TIME, description: "+1 de escudo ao final da fase" },
+  { name:"Rouba alma", effect:(ctx) => ctx.shield+=ctx.turnKill, time:END_TURN_TIME, description: "+1 de escudo para cada inimigo derrotado" },
+  { name:"Level +1", effect:(ctx) => ctx.level+=1, time:END_ROUND_TIME, description: "+1 nivel no final da fase" },
+  { name:"Gambler", effect:(ctx) => refreshCards(ctx,1), time:END_TURN_TIME, description: "troca uma carta aleatória ao final de cada turno" }
+]
+function newPassiveCard() {
+  let c = PC_CARDS[rand(0,PC_CARDS.length-1)];
+  if(context.passiveCards[c.name]) {
+    context.passiveCards[c.name].amount += 1;
+  } else {
+    c = { ...c, amount:1}
+    context.passiveCards[c.name] = c;
+  }
+  return c;
+}
 
 /* ================== ENEMIES ================== */
-    const ENEMY_DRAW = [
-      ()=> {
-        ctx.fillStyle="green";
-        ctx.fillRect(10, 44, 8,8)
-        ctx.fillRect(38, 44, 8,8)
+const ENEMY_DRAW = [
+  ()=> {
+    ctx.fillStyle="green";
+    ctx.fillRect(10, 44, 8,8)
+    ctx.fillRect(38, 44, 8,8)
 
-        ctx.fillRect(18, 24, 20,20)
+    ctx.fillRect(18, 24, 20,20)
 
-        ctx.fillRect(10, 24, 8,8)
-        ctx.fillRect(6, 32, 8,8)
+    ctx.fillRect(10, 24, 8,8)
+    ctx.fillRect(6, 32, 8,8)
 
-        ctx.fillRect(38, 24, 8,8)
-        ctx.fillRect(42, 32, 8,8)
-        ctx.fillRect(22, 12, 12,12)
-        ctx.fillStyle="brown";
-        ctx.fillRect(22, 14, 12,2)
-        ctx.fillStyle="white";
-        ctx.fillRect(24, 16, 2,2)
-        ctx.fillRect(32, 16, 2,2)
-      },
-      ()=> {
-        ctx.fillStyle="#f00";
-        ctx.fillRect(6, 18, 6, 6);
-        ctx.fillRect(12, 18, 6, 6);
-        ctx.fillRect(12, 12, 6, 6);
-        ctx.fillRect(18, 12, 6, 6);
-        ctx.fillRect(18, 18, 6, 6);
-        ctx.fillRect(24, 18, 6, 6);
-        ctx.fillRect(24, 24, 6, 6);
-        ctx.fillRect(24, 30, 6, 6);
-        ctx.fillRect(24, 36, 6, 6);
-        ctx.fillRect(30, 36, 6, 6);
-        ctx.fillRect(36, 36, 6, 6);
-        ctx.fillRect(42, 36, 6, 6);
-        ctx.fillRect(42, 42, 6, 6);
-        ctx.fillRect(36, 42, 6, 6);
-        ctx.fillRect(30, 42, 6, 6);
-        ctx.fillRect(24, 42, 6, 6);
-        ctx.fillRect(30, 48, 6, 6);
-        ctx.fillRect(42, 48, 6, 6);
-        ctx.fillRect(18, 42, 6, 6);
-        ctx.fillRect(42, 30, 6, 6);
-        ctx.fillRect(42, 24, 6, 6);
-        ctx.fillRect(42, 18, 6, 6);
-        ctx.fillRect(48, 18, 6, 6);
-        ctx.fillStyle="#fff";
-        ctx.fillRect(15, 15, 3, 3);
-        ctx.fillRect(9, 24, 3, 3);
-        ctx.fillRect(15, 24, 3, 3);
-        ctx.fillRect(18, 12, 3, 3);
-      },
-      ()=> {
-        ctx.fillStyle="#1e60c9";
-        ctx.fillRect(30, 20, 10, 10);
-        ctx.fillRect(20, 10, 10, 10);
-        ctx.fillRect(20, 20, 10, 10);
-        ctx.fillRect(30, 30, 10, 10);
-        ctx.fillRect(36, 36, 6, 6);
-        ctx.fillRect(42, 42, 6, 6);
-        ctx.fillRect(24, 36, 6, 6);
-        ctx.fillRect(18, 42, 6, 6);
-        ctx.fillRect(30, 18, 6, 6);
-        ctx.fillRect(16, 12, 4, 12);
-        ctx.fillStyle="#0f397d";
-        ctx.fillRect(32, 24, 4, 4);
-        ctx.fillRect(28, 28, 4, 4);
-        ctx.fillRect(20, 28, 4, 4);
-        ctx.fillRect(16, 32, 4, 4);
-        ctx.fillRect(20, 32, 4, 4);
-        ctx.fillStyle="#fff";
-        ctx.fillRect(20, 16, 2, 2);
-        ctx.fillRect(18, 14, 2, 2);
-        ctx.fillRect(26, 16, 2, 2);
-        ctx.fillRect(28, 14, 2, 2);
-        ctx.fillRect(22, 22, 2, 2);
-        ctx.fillRect(26, 22, 2, 2);
-      },
-      ()=> {
-        ctx.fillStyle="#4b237d";
-        ctx.fillRect(20, 20, 12, 8);
-        ctx.fillRect(24, 16, 4, 4);
-        ctx.fillRect(20, 12, 4, 4);
-        ctx.fillRect(28, 12, 4, 4);
-        ctx.fillRect(14, 28, 28, 14);
-        ctx.fillRect(21, 42, 7, 7);
-        ctx.fillRect(14, 49, 7, 7);
-        ctx.fillRect(28, 42, 7, 7);
-        ctx.fillRect(35, 49, 7, 7);
-        ctx.fillRect(7, 35, 7, 7);
-        ctx.fillRect(42, 35, 7, 7);
-        ctx.fillStyle="#fff";
-        ctx.fillRect(24, 24, 2, 2);
-        ctx.fillRect(22, 24, 2, 2);
-        ctx.fillRect(22, 22, 2, 2);
-        ctx.fillRect(28, 24, 2, 2);
-        ctx.fillRect(26, 24, 2, 2);
-        ctx.fillRect(28, 22, 2, 2);
-        ctx.fillRect(20, 34, 2, 2);
-        ctx.fillRect(18, 36, 2, 2);
-        ctx.fillRect(16, 38, 2, 2);
-        ctx.fillRect(34, 34, 2, 2);
-        ctx.fillRect(36, 36, 2, 2);
-        ctx.fillRect(38, 38, 2, 2);
-        ctx.fillRect(40, 40, 2, 2);
-        ctx.fillRect(14, 40, 2, 2);
-        ctx.fillRect(12, 40, 2, 2);
-        ctx.fillRect(42, 40, 2, 2);
-      }
-    ]
-    function newEnemy() {
-      if (Math.random()<0.5) {
-        const v=rand(1,6);
-        return {min:v,max:v,hp:1,draw:ENEMY_DRAW[rand(0,ENEMY_DRAW.length-1)]};
-      }
-      let a=rand(1,5), b=rand(a+1,a+3);
-      return {min:a,max:Math.min(b,6),hp:1,draw:ENEMY_DRAW[rand(0,ENEMY_DRAW.length-1)]};
-    }
+    ctx.fillRect(38, 24, 8,8)
+    ctx.fillRect(42, 32, 8,8)
+    ctx.fillRect(22, 12, 12,12)
+    ctx.fillStyle="brown";
+    ctx.fillRect(22, 14, 12,2)
+    ctx.fillStyle="white";
+    ctx.fillRect(24, 16, 2,2)
+    ctx.fillRect(32, 16, 2,2)
+  },
+  ()=> {
+    ctx.fillStyle="#f00";
+    ctx.fillRect(6, 18, 6, 6);
+    ctx.fillRect(12, 18, 6, 6);
+    ctx.fillRect(12, 12, 6, 6);
+    ctx.fillRect(18, 12, 6, 6);
+    ctx.fillRect(18, 18, 6, 6);
+    ctx.fillRect(24, 18, 6, 6);
+    ctx.fillRect(24, 24, 6, 6);
+    ctx.fillRect(24, 30, 6, 6);
+    ctx.fillRect(24, 36, 6, 6);
+    ctx.fillRect(30, 36, 6, 6);
+    ctx.fillRect(36, 36, 6, 6);
+    ctx.fillRect(42, 36, 6, 6);
+    ctx.fillRect(42, 42, 6, 6);
+    ctx.fillRect(36, 42, 6, 6);
+    ctx.fillRect(30, 42, 6, 6);
+    ctx.fillRect(24, 42, 6, 6);
+    ctx.fillRect(30, 48, 6, 6);
+    ctx.fillRect(42, 48, 6, 6);
+    ctx.fillRect(18, 42, 6, 6);
+    ctx.fillRect(42, 30, 6, 6);
+    ctx.fillRect(42, 24, 6, 6);
+    ctx.fillRect(42, 18, 6, 6);
+    ctx.fillRect(48, 18, 6, 6);
+    ctx.fillStyle="#fff";
+    ctx.fillRect(15, 15, 3, 3);
+    ctx.fillRect(9, 24, 3, 3);
+    ctx.fillRect(15, 24, 3, 3);
+    ctx.fillRect(18, 12, 3, 3);
+  },
+  ()=> {
+    ctx.fillStyle="#1e60c9";
+    ctx.fillRect(30, 20, 10, 10);
+    ctx.fillRect(20, 10, 10, 10);
+    ctx.fillRect(20, 20, 10, 10);
+    ctx.fillRect(30, 30, 10, 10);
+    ctx.fillRect(36, 36, 6, 6);
+    ctx.fillRect(42, 42, 6, 6);
+    ctx.fillRect(24, 36, 6, 6);
+    ctx.fillRect(18, 42, 6, 6);
+    ctx.fillRect(30, 18, 6, 6);
+    ctx.fillRect(16, 12, 4, 12);
+    ctx.fillStyle="#0f397d";
+    ctx.fillRect(32, 24, 4, 4);
+    ctx.fillRect(28, 28, 4, 4);
+    ctx.fillRect(20, 28, 4, 4);
+    ctx.fillRect(16, 32, 4, 4);
+    ctx.fillRect(20, 32, 4, 4);
+    ctx.fillStyle="#fff";
+    ctx.fillRect(20, 16, 2, 2);
+    ctx.fillRect(18, 14, 2, 2);
+    ctx.fillRect(26, 16, 2, 2);
+    ctx.fillRect(28, 14, 2, 2);
+    ctx.fillRect(22, 22, 2, 2);
+    ctx.fillRect(26, 22, 2, 2);
+  },
+  ()=> {
+    ctx.fillStyle="#4b237d";
+    ctx.fillRect(20, 20, 12, 8);
+    ctx.fillRect(24, 16, 4, 4);
+    ctx.fillRect(20, 12, 4, 4);
+    ctx.fillRect(28, 12, 4, 4);
+    ctx.fillRect(14, 28, 28, 14);
+    ctx.fillRect(21, 42, 7, 7);
+    ctx.fillRect(14, 49, 7, 7);
+    ctx.fillRect(28, 42, 7, 7);
+    ctx.fillRect(35, 49, 7, 7);
+    ctx.fillRect(7, 35, 7, 7);
+    ctx.fillRect(42, 35, 7, 7);
+    ctx.fillStyle="#fff";
+    ctx.fillRect(24, 24, 2, 2);
+    ctx.fillRect(22, 24, 2, 2);
+    ctx.fillRect(22, 22, 2, 2);
+    ctx.fillRect(28, 24, 2, 2);
+    ctx.fillRect(26, 24, 2, 2);
+    ctx.fillRect(28, 22, 2, 2);
+    ctx.fillRect(20, 34, 2, 2);
+    ctx.fillRect(18, 36, 2, 2);
+    ctx.fillRect(16, 38, 2, 2);
+    ctx.fillRect(34, 34, 2, 2);
+    ctx.fillRect(36, 36, 2, 2);
+    ctx.fillRect(38, 38, 2, 2);
+    ctx.fillRect(40, 40, 2, 2);
+    ctx.fillRect(14, 40, 2, 2);
+    ctx.fillRect(12, 40, 2, 2);
+    ctx.fillRect(42, 40, 2, 2);
+  }
+]
+function newEnemy() {
+  if (Math.random()<0.5) {
+    const v=rand(1,6);
+    return {min:v,max:v,hp:1,draw:ENEMY_DRAW[rand(0,ENEMY_DRAW.length-1)]};
+  }
+  let a=rand(1,5), b=rand(a+1,a+3);
+  return {min:a,max:Math.min(b,6),hp:1,draw:ENEMY_DRAW[rand(0,ENEMY_DRAW.length-1)]};
+}
 
-    function spawnEnemies(ctx) {
-      ctx.enemies=[];
-      let amount = rand(ctx.level,3+ctx.level)
-      for(let i=0;i<amount;i++)
-        ctx.enemies.push(newEnemy());
-      log("Inimigos gerados:", ctx.enemies.length);
-    }
+function spawnEnemies(ctx) {
+  ctx.enemies=[];
+  let amount = rand(ctx.level,3+ctx.level)
+  for(let i=0;i<amount;i++)
+    ctx.enemies.push(newEnemy());
+  log("Inimigos gerados:", ctx.enemies.length);
+}
 
 /* ================== FLOW ================== */
-    function startRound() {
-      log("=== INÍCIO DA RODADA | Nível " + context.level + " ===");
-      spawnEnemies(context);
-      renewCards(context);
-      resetTurn()
-    }
+function startRound() {
+  log("=== INÍCIO DA RODADA | Nível " + context.level + " ===");
+  spawnEnemies(context);
+  renewCards(context);
+  resetTurn()
+}
 
-    function resetTurn() {
-      context.rollValue=null;
-      context.calcValue=null;
-      context.enemyRoll=null;
-      context.passedTurn=false;
-      context.playCards = []
-      context.turnKill = 0;
-      context.phase=GAME_PHASES[0];
-    }
+function resetTurn() {
+  context.rollValue=null;
+  context.calcValue=null;
+  context.enemyRoll=null;
+  context.passedTurn=false;
+  context.playCards = []
+  context.turnKill = 0;
+  context.phase=GAME_PHASES[0];
+}
 
-    function renewCards(ctx) {
-      ctx.activeCards = []
-      while(ctx.activeCards.length<3) ctx.activeCards.push(newActiveCard());
-    }
+function renewCards(ctx) {
+  ctx.activeCards = []
+  while(ctx.activeCards.length<3) ctx.activeCards.push(newActiveCard());
+}
 
-    function refreshCards(ctx,amount) {
-      let index = rand(0,ctx.activeCards.length-1)
-      if(index < ctx.activeCards.length) {
-        ctx.activeCards.splice(index,1,newActiveCard())
-      }
-    }
-
-    newPassiveCard()
-    startRound();
+function refreshCards(ctx,amount) {
+  let index = rand(0,ctx.activeCards.length-1)
+  if(index < ctx.activeCards.length) {
+    ctx.activeCards.splice(index,1,newActiveCard())
+  }
+}
+newPassiveCard()
+startRound();
 
 /* ================== GAME LOGIC ================== */
-    function rollPlayer(ctx) {
-      ctx.passedTurn = false;
+function rollPlayer(ctx) {
+  ctx.passedTurn = false;
 
-      ctx.rollValue = rand(1,6);
-      ctx.calcValue = ctx.rollValue;
-      log("Jogador rolou:", ctx.rollValue);
+  ctx.rollValue = rand(1,6);
+  ctx.calcValue = ctx.rollValue;
+  log("Jogador rolou:", ctx.rollValue);
 
-      Object.values(ctx.passiveCards).forEach(p=>{
-        if(p.time == ROLL_TIME) {
-          const before=ctx.calcValue;
-          for(let i=0; i < p.amount; i++) {
-            ctx.calcValue=p.effect(ctx);
-          }
-          log(`Passiva ${p.name} ${p.amount}x:`, {before, after:ctx.calcValue});
-        }
-      });
-
-      ctx.calcValue=normalize(ctx.calcValue);
-      log("Valor final após passivas:", ctx.calcValue);
-
-      ctx.phase=GAME_PHASES[1];
-    }
-
-    function previewTurn(ctx) {
-      const ctx2 = {
-        ...ctx
+  Object.values(ctx.passiveCards).forEach(p=>{
+    if(p.time == ROLL_TIME) {
+      const before=ctx.calcValue;
+      for(let i=0; i < p.amount; i++) {
+        ctx.calcValue=p.effect(ctx);
       }
-      if(ctx.calcValue != null) {
-        ctx2.playCards.forEach(p=>{
-          const before=ctx2.calcValue;
-          ctx2.calcValue=p.effect(ctx2);
-        })
-        ctx2.calcValue=normalize(ctx2.calcValue);
+      log(`Passiva ${p.name} ${p.amount}x:`, {before, after:ctx.calcValue});
+    }
+  });
+
+  ctx.calcValue=normalize(ctx.calcValue);
+  log("Valor final após passivas:", ctx.calcValue);
+
+  ctx.phase=GAME_PHASES[1];
+}
+
+function previewTurn(ctx) {
+  const ctx2 = {
+    ...ctx
+  }
+  if(ctx.calcValue != null) {
+    ctx2.playCards.forEach(p=>{
+      const before=ctx2.calcValue;
+      ctx2.calcValue=p.effect(ctx2);
+    })
+    ctx2.calcValue=normalize(ctx2.calcValue);
+  }
+  return ctx2;
+}
+
+function resolveTurn(ctx) {
+  if(ctx.playCards.length > 0) {
+    ctx.passedTurn = false;
+    ctx.playCards.forEach(p=>{
+      const before=ctx.calcValue;
+      ctx.calcValue=p.effect(ctx);
+      log(`Ativa ${p.name}:`, {before, after:ctx.calcValue});
+      p.used = true
+    })
+    ctx.playCards = []
+  } else {
+    ctx.passedTurn = true;
+  }
+  ctx.calcValue=normalize(ctx.calcValue)
+
+  let diceValue = ctx.calcValue;
+  log("Resolvendo rodada com valor final:", diceValue);
+  let killed=false;
+
+  ctx.enemies.forEach(e=>{
+    if(enemyDie(e,diceValue)) {
+      e.hp=0;
+      killed=true;
+      log("Inimigo derrotado:", `${e.min}-${e.max}`);
+      ctx.turnKill += 1;
+    }
+  });
+
+  SCORE += ctx.turnKill*ctx.level*(ENEMY_POINT*ctx.turnKill);
+
+  context.enemies=context.enemies.filter(e=>e.hp>0);
+
+  Object.values(ctx.passiveCards).forEach(p=>{
+    if(p.time == END_TURN_TIME) {
+      for(let i=0; i < p.amount; i++) {
+        p.effect(ctx);
       }
-      return ctx2;
+      log(`Passiva ${p.name} ${p.amount}x`);
     }
+  });
 
-    function resolveTurn(ctx) {
-      if(ctx.playCards.length > 0) {
-        ctx.passedTurn = false;
-        ctx.playCards.forEach(p=>{
-          const before=ctx.calcValue;
-          ctx.calcValue=p.effect(ctx);
-          log(`Ativa ${p.name}:`, {before, after:ctx.calcValue});
-          p.used = true
-        })
-        ctx.playCards = []
-      } else {
-        ctx.passedTurn = true;
+  if(killed) {
+    if(context.enemies.length===0) nextLevel(ctx);
+    else resetTurn();
+  } else {
+    enemyAttack(ctx);
+  }
+}
+
+function enemyDie(e,diceValue) {
+  if(diceValue == null)
+    return false
+  return diceValue>=e.min && diceValue<=e.max;
+}
+
+function nextLevel(ctx) {
+  Object.values(ctx.passiveCards).forEach(p=>{
+    if(p.time == END_ROUND_TIME) {
+      for(let i=0; i < p.amount; i++) {
+        p.effect(ctx);
       }
-      ctx.calcValue=normalize(ctx.calcValue)
+      log(`Passiva ${p.name} ${p.amount}x`);
+    }
+  });
 
-      let diceValue = ctx.calcValue;
-      log("Resolvendo rodada com valor final:", diceValue);
-      let killed=false;
+  ctx.level++;
+  log("Subiu de nível:", ctx.level);
+  newPassiveCard();
+  startRound();
+}
 
-      ctx.enemies.forEach(e=>{
-        if(enemyDie(e,diceValue)) {
-          e.hp=0;
-          killed=true;
-          log("Inimigo derrotado:", `${e.min}-${e.max}`);
-          ctx.turnKill += 1;
-        }
-      });
+function enemyAttack(ctx) {
+  ctx.phase = GAME_PHASES[2]
 
-      SCORE += ctx.turnKill*ctx.level*(50*ctx.turnKill);
-
-      context.enemies=context.enemies.filter(e=>e.hp>0);
-
-      Object.values(ctx.passiveCards).forEach(p=>{
-        if(p.time == END_TURN_TIME) {
-          for(let i=0; i < p.amount; i++) {
-            p.effect(ctx);
-          }
-          log(`Passiva ${p.name} ${p.amount}x`);
-        }
-      });
-
-      if(killed) {
-        if(context.enemies.length===0) nextLevel(ctx);
-        else resetTurn();
-      } else {
-        enemyAttack(ctx);
+  ctx.enemyRoll=rand(Math.ceil(ctx.enemies.length/2),ctx.enemies.length)*Math.ceil(ctx.level/2);
+  Object.values(ctx.passiveCards).forEach(p=>{
+    if(p.time == ENEMY_TIME) {
+      const before=ctx.enemyRoll;
+      for(let i=0; i < p.amount; i++) {
+        ctx.enemyRoll=p.effect(ctx);
       }
+      log(`Passiva ${p.name} ${p.amount}x:`, {before, after:ctx.enemyRoll});
     }
+  });
+  ctx.enemyRoll=Math.max(ctx.enemyRoll,1);
+}
 
-    function enemyDie(e,diceValue) {
-      if(diceValue == null)
-        return false
-      return diceValue>=e.min && diceValue<=e.max;
+function resolveEnemyTurn(ctx) {
+  ctx.shield-=ctx.enemyRoll;
+  log("Inimigo atacou:", {roll:ctx.enemyRoll,shield:ctx.shield});
+
+  if(ctx.shield<=0) {
+    log("GAME OVER");
+    ctx.phase=GAME_PHASES[3];
+  } else {
+    if(ctx.passedTurn) {
+      renewCards(ctx)
     }
-
-    function nextLevel(ctx) {
-      Object.values(ctx.passiveCards).forEach(p=>{
-        if(p.time == END_ROUND_TIME) {
-          for(let i=0; i < p.amount; i++) {
-            p.effect(ctx);
-          }
-          log(`Passiva ${p.name} ${p.amount}x`);
-        }
-      });
-
-      ctx.level++;
-      log("Subiu de nível:", ctx.level);
-      newPassiveCard();
-      startRound();
-    }
-
-    function enemyAttack(ctx) {
-      ctx.phase = GAME_PHASES[2]
-
-      ctx.enemyRoll=rand(Math.ceil(ctx.enemies.length/2),ctx.enemies.length)*Math.ceil(ctx.level/2);
-      Object.values(ctx.passiveCards).forEach(p=>{
-        if(p.time == ENEMY_TIME) {
-          const before=ctx.enemyRoll;
-          for(let i=0; i < p.amount; i++) {
-            ctx.enemyRoll=p.effect(ctx);
-          }
-          log(`Passiva ${p.name} ${p.amount}x:`, {before, after:ctx.enemyRoll});
-        }
-      });
-    }
-
-    function resolveEnemyTurn(ctx) {
-      ctx.shield-=ctx.enemyRoll;
-      log("Inimigo atacou:", {roll:ctx.enemyRoll,shield:ctx.shield});
-
-      if(ctx.shield<=0) {
-        log("GAME OVER");
-        ctx.phase=GAME_PHASES[3];
-      } else {
-        if(ctx.passedTurn) {
-          renewCards(ctx)
-        }
-        resetTurn();
-      }
-    }
+    resetTurn();
+  }
+}
 
 /* ================== INPUT ================== */
-    canvas.addEventListener("click",e=>{
-      const x=e.clientX,y=e.clientY;
+canvas.addEventListener("click",e=>{
+  const x=e.clientX,y=e.clientY;
 
-      const scaleX = x * GAME_WIDTH/canvas.width;
-      const scaleY = y * GAME_HEIGHT/canvas.height;
+  const scaleX = x * GAME_WIDTH/canvas.width;
+  const scaleY = y * GAME_HEIGHT/canvas.height;
 
-      for(let btn of BUTTONS) {
-        if(btn.status()) {
-          if(scaleX > btn.x && scaleX < btn.x+btn.w) {
-            if(scaleY > btn.y && scaleY < btn.y+BUTTON_HEIGHT) {
-              btn.effect()
-              return;
-            }  
-          }
+  for(let btn of BUTTONS) {
+    if(btn.status()) {
+      if(scaleX > btn.x && scaleX < btn.x+btn.w) {
+        if(scaleY > btn.y && scaleY < btn.y+BUTTON_HEIGHT) {
+          btn.effect()
+          return;
+        }  
+      }
+    }
+  }
+
+  if(context.phase.name === "decision") {
+    context.activeCards.forEach((c,i) => {
+      const cx=canvas.width/2-160+i*110;
+      const cy=canvas.height-200-BUTTON_H_SCALED;
+      if(!c.used && x>cx && x<cx+100 && y>cy && y<cy+120) {
+        if(context.playCards.includes(c)) {
+          context.playCards=context.playCards.filter(item => item !== c)
+        } else {
+          context.playCards.push(c)
         }
       }
-
-      const bhScaled = BUTTON_HEIGHT * canvas.height/GAME_HEIGHT;
-      if(context.phase.name === "decision") {
-        context.activeCards.forEach((c,i) => {
-          const cx=canvas.width/2-160+i*110;
-          const cy=canvas.height-200-bhScaled;
-          if(!c.used && x>cx && x<cx+100 && y>cy && y<cy+120) {
-            if(context.playCards.includes(c)) {
-              context.playCards=context.playCards.filter(item => item !== c)
-            } else {
-              context.playCards.push(c)
-            }
-          }
-        });
-      }
-
     });
+  }
 
-    canvas.addEventListener("mousemove",e=>{
-      DESCRIPTION = null;
-      const cx=e.clientX,cy=e.clientY;
+});
 
-      let i=0;
-      for(const c of Object.values(context.passiveCards)) {
-        const x = 20;
-        const y = 50+i*60;
-        const w = 160;
-        const h = 50;
+canvas.addEventListener("mousemove",e=>{
+  DESCRIPTION = null;
+  const cx=e.clientX,cy=e.clientY;
 
-        if(cx >= x && cx <= x+w && cy >= y && cy <= y+h) {
-          DESCRIPTION = {
-            'x':cx,
-            'y':cy,
-            'label':c.description
-          }
-          break;
-        }
+  let i=0;
+  for(const c of Object.values(context.passiveCards)) {
+    const x = 20;
+    const y = 50+i*60;
+    const w = 160;
+    const h = 50;
 
-        i++;
+    if(cx >= x && cx <= x+w && cy >= y && cy <= y+h) {
+      DESCRIPTION = {
+        'x':cx,
+        'y':cy,
+        'label':c.description
       }
-      i=0;
+      break;
+    }
 
-      const bhScaled = BUTTON_HEIGHT * canvas.height/GAME_HEIGHT;
-      let c_b_y=canvas.height-170-bhScaled
-      for(const c of context.activeCards) {
-        const x=canvas.width/2-160+i*110;
-        let y = c_b_y;
-        if(context.phase.name == "decision" && !c.used) {
-          y -= 30;
-        }
-        const w = 100;
-        const h = 120;
+    i++;
+  }
+  i=0;
 
-        if(cx >= x && cx <= x+w && cy >= y && cy <= y+h) {
-          DESCRIPTION = {
-            'x':cx,
-            'y':cy,
-            'label':c.description
-          }
-          break;
-        }
+  let c_b_y=canvas.height-170-BUTTON_H_SCALED
+  for(const c of context.activeCards) {
+    const x=canvas.width/2-160+i*110;
+    let y = c_b_y;
+    if(context.phase.name == "decision" && !c.used) {
+      y -= 30;
+    }
+    const w = 100;
+    const h = 120;
 
-        i++;
-      };
-    });
+    if(cx >= x && cx <= x+w && cy >= y && cy <= y+h) {
+      DESCRIPTION = {
+        'x':cx,
+        'y':cy,
+        'label':c.description
+      }
+      break;
+    }
+
+    i++;
+  };
+});
 
 /* ================== DRAW ================== */
-    function draw() {
-      const bhScaled = BUTTON_HEIGHT * canvas.height/GAME_HEIGHT;
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle=BACKGROUND_COLOR;
-      ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  // Phase label
-      ctx.font="22px Arial";
-      ctx.fillStyle="#f5f5f5";
-      let label=context.phase.desc;
-      ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, 40);
-      ctx.font="18px Arial";
-      ctx.fillStyle="#faefb6";
-      label=SCORE;
-      ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, 62);
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle=BACKGROUND_COLOR;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  let label;
 
   // Passives
-      Object.values(context.passiveCards).forEach((p,i)=>{
-        ctx.fillStyle="#444";
-        ctx.fillRect(20,50+i*60,160,50);
-        ctx.fillStyle="white";
-        ctx.fillText(p.name,30,80+i*60);
-        if(p.amount > 1) {
-          ctx.font="18px Arial";
-          ctx.fillStyle="#400";
-          ctx.beginPath();
-          ctx.arc(160, 75+i*60, 15, 0, 2 * Math.PI);
-          ctx.fill();
-          ctx.fillStyle="white";
-          ctx.fillText(p.amount,160-ctx.measureText(p.amount).width/2,80+i*60);
-          ctx.font="22px Arial";
-        }
-      });
+  Object.values(context.passiveCards).forEach((p,i)=>{
+    let size = 5;
+    let line = Math.floor(i/size);
+    let x = 10 + line*170;
+    let y = 66+(i-size*line)*60;
+    ctx.fillStyle="#444";
+    ctx.fillRect(x,y,160,50);
+    ctx.fillStyle="white";
+    ctx.fillText(p.name,x+10,y+30);
+    if(p.amount > 1) {
+      ctx.font="18px Arial";
+      ctx.fillStyle="#400";
+      ctx.beginPath();
+      ctx.arc(x+140, y+25, 15, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.fillStyle="white";
+      label = p.amount;
+      ctx.fillText(p.amount,x+140-ctx.measureText(p.amount).width/2,y+30);
+      ctx.font="22px Arial";
+    }
+  });
 
-      const previewValue = previewTurn(context).calcValue
+  const previewValue = previewTurn(context).calcValue
   // Enemies
-      const e_line = 12;
-      let lines = context.enemies.length/e_line
-      let e_b_y = canvas.height/2-60*lines;
-      context.enemies.forEach((e,i)=>{
-        const line = Math.floor(i/e_line);
-        const ex=canvas.width/2-Math.min(context.enemies.length-line*e_line,e_line)*40+(i%e_line)*80;
-        let ey = e_b_y + line*70;
+  let e_line = 12;
+  if(VERTICAL)
+    e_line = 4;
+  let lines = context.enemies.length/e_line
+  let e_b_y = canvas.height/2-60*lines;
+  context.enemies.forEach((e,i)=>{
+    const line = Math.floor(i/e_line);
+    const ex=canvas.width/2-Math.min(context.enemies.length-line*e_line,e_line)*40+(i%e_line)*80;
+    let ey = e_b_y + line*70;
 
-        drawEnemy(e,previewValue,ex,ey);
-      });
+    drawEnemy(e,previewValue,ex,ey);
+  });
 
   // Active cards
-      let c_b_y=canvas.height-170-bhScaled
-      let fColor = "#3366cc";
-      if(context.phase.name != "decision") {
-        fColor = "#142a57";
-      }
-      context.activeCards.forEach((c,i)=>{
-        const cx=canvas.width/2-160+i*110;
-        let cy = c_b_y;
-        if(context.phase.name == "decision" && !c.used) {
-          cy -= 30;
-        }
-        if(context.playCards.includes(c)) {
-          cy-=10;
-          ctx.fillStyle="#2a2";
-          ctx.fillRect(cx-3,cy-3,106,126);
-        }
-        ctx.fillStyle=c.used?"#555":fColor;
-        ctx.fillRect(cx,cy,100,120);
-        ctx.fillStyle="white";
-        ctx.fillText(c.name,cx+20,cy+65);
-      });
+  ctx.font="18px Arial";
+  let c_b_y=canvas.height-170-BUTTON_H_SCALED
+  let fColor = "#3366cc";
+  if(context.phase.name != "decision") {
+    fColor = "#142a57";
+  }
+  context.activeCards.forEach((c,i)=>{
+    const cx=canvas.width/2-160+i*110;
+    let cy = c_b_y;
+    if(context.phase.name == "decision" && !c.used) {
+      cy -= 30;
+    }
+    if(context.playCards.includes(c)) {
+      cy-=10;
+      ctx.fillStyle="#2a2";
+      ctx.fillRect(cx-3,cy-3,106,126);
+    }
+    ctx.fillStyle=c.used?"#555":fColor;
+    ctx.fillRect(cx,cy,100,120);
+    ctx.fillStyle="white";
+    const names = c.name.split(" ");
+    names.forEach((name,i)=> {
+      ctx.fillText(name,cx+50-ctx.measureText(name).width/2,cy+65+i*18);
+    });
+      
+  });
 
   // ROLLs
-      ctx.fillStyle = "#bbb";
-      ctx.beginPath();
-      ctx.arc(canvas.width/2, canvas.height-50-bhScaled, 25, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.fillStyle = "#fff";
-      ctx.beginPath();
-      ctx.arc(canvas.width/2, canvas.height-bhScaled, 50, 0, 2 * Math.PI);
-      ctx.fill();
+  ctx.fillStyle = "#bbb";
+  ctx.beginPath();
+  ctx.arc(canvas.width/2, canvas.height-50-BUTTON_H_SCALED, 25, 0, 2 * Math.PI);
+  ctx.fill();
+  drawDice(previewValue);
 
-      if(context.rollValue) {
-        ctx.font="18px Arial";
-        ctx.fillStyle="#777";
-        label=context.rollValue;
-        ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, canvas.height-55-bhScaled);
-      }
-
-      if(previewValue) {
-        ctx.font="22px Arial";
-        ctx.fillStyle="#000";
-        label=previewValue;
-        ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, canvas.height-20-bhScaled);
-      }
+  if(context.rollValue) {
+    ctx.font="18px Arial";
+    ctx.fillStyle="#777";
+    label=context.rollValue;
+    ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, canvas.height-55-BUTTON_H_SCALED);
+  }
 
   // LIFE
-      const size = 35;
-      const lx = 20+size+size/2;
-      const ly = canvas.height-250-size;
-      ctx.fillStyle = "red"
-      ctx.beginPath();
-      ctx.arc(lx-size/2, ly, size, 0, 2 * Math.PI);
-      ctx.arc(lx+size/2, ly, size, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(lx, ly+size/2, size, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.font="30px Arial";
-      ctx.fillStyle="#fff";
-      let shieldLabel=context.shield;
-      ctx.fillText(shieldLabel,lx-ctx.measureText(shieldLabel).width/2,ly+10);
-      ctx.font="15px Arial";
-      ctx.fillStyle="#fff";
-      shieldLabel="escudo";
-      ctx.fillText(shieldLabel,lx-ctx.measureText(shieldLabel).width/2,ly+30);
-      ctx.font="20px Arial";
-      ctx.fillText(`Nível: ${context.level}`,lx+size*2+10,ly+12);
+  const size = 35;
+  const lx = 10+size+size/2;
+  const ly = canvas.height-size*1.5;
+  ctx.fillStyle = "red"
+  ctx.beginPath();
+  ctx.arc(lx-size/2, ly, size, 0, 2 * Math.PI);
+  ctx.arc(lx+size/2, ly, size, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(lx, ly+size/2, size, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.font="30px Arial";
+  ctx.fillStyle="#fff";
+  let shieldLabel=context.shield;
+  ctx.fillText(shieldLabel,lx-ctx.measureText(shieldLabel).width/2,ly+10);
+  ctx.font="15px Arial";
+  ctx.fillStyle="#fff";
+  shieldLabel="escudo";
+  ctx.fillText(shieldLabel,lx-ctx.measureText(shieldLabel).width/2,ly+30);
+
+  ctx.font="20px Arial";
+  if(VERTICAL)
+    ctx.fillText(`Nível: ${context.level}`,canvas.width-100,ly+12);
+  else
+    ctx.fillText(`Nível: ${context.level}`,lx+size*2+10,ly+12);
+
+  // Phase label
+  ctx.font="22px Arial";
+  ctx.fillStyle="#f5f5f5";
+  label=context.phase.desc;
+  ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, 40);
+  ctx.font="18px Arial";
+  ctx.fillStyle="#faefb6";
+  label=SCORE;
+  ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, 62);
 
   // BUTTONS
-      ctx.font="16px Arial";
-      for(let btn of BUTTONS) {
-        if(btn.status()) {
-          drawBtn(btn);
-        }
-      }
-
-  // LOG PANEL
-      const logX = 20;
-      const logY = canvas.height - 220;
-      const logW = 380;
-      const logH = 200;
-
-      ctx.fillStyle="rgba(0,0,0,0.7)";
-      ctx.fillRect(logX, logY, logW, logH);
-      ctx.strokeStyle="#666";
-      ctx.strokeRect(logX, logY, logW, logH);
-
-      ctx.font="12px Arial";
-      ctx.fillStyle="#0f0";
-      logLines.slice(-12).forEach((line,i)=>{
-        ctx.fillText(line, logX+10, logY+20+i*14);
-      });
+  for(let btn of BUTTONS) {
+    if(btn.status()) {
+      drawBtn(btn);
+    }
+  }
 
   // GAME OVER
-      if(context.phase && context.phase.name==="gameover") {
-        ctx.fillStyle="#000";
-        ctx.fillRect(canvas.width/2-140, canvas.height/2-40, 280, 50);
-        ctx.fillStyle="red";
-        ctx.font="40px Arial";
-        ctx.fillText("GAME OVER",canvas.width/2-120,canvas.height/2);
-      } else {
-        requestAnimationFrame(draw);
-      }
+  if(context.phase && context.phase.name==="gameover") {
+    ctx.fillStyle="#000";
+    ctx.fillRect(canvas.width/2-140, canvas.height/2-40, 280, 50);
+    ctx.fillStyle="red";
+    ctx.font="40px Arial";
+    ctx.fillText("GAME OVER",canvas.width/2-120,canvas.height/2);
+  } else {
+    requestAnimationFrame(draw);
+  }
 
   // DESCRIPTION
-      if(DESCRIPTION != null) {
-        ctx.font="20px Arial";
-        const dsize = ctx.measureText(DESCRIPTION.label).width;
-        ctx.fillStyle="#000";
+  if(DESCRIPTION != null) {
+    ctx.font="20px Arial";
+    const dsize = ctx.measureText(DESCRIPTION.label).width;
+    ctx.fillStyle="#000";
 
-        ctx.fillRect(DESCRIPTION.x, DESCRIPTION.y, dsize+8, 30);
-        ctx.fillStyle="#fff";
-        ctx.fillText(DESCRIPTION.label,DESCRIPTION.x+4, DESCRIPTION.y+20);
-      }
+    ctx.fillRect(DESCRIPTION.x, DESCRIPTION.y, dsize+8, 30);
+    ctx.fillStyle="#fff";
+    ctx.fillText(DESCRIPTION.label,DESCRIPTION.x+4, DESCRIPTION.y+20);
+  }
 
-    }
+}
 
-    function drawEnemy(e,previewValue,ex,ey) {
-      if(enemyDie(e,previewValue)) {
-        ey += 20
-        ctx.fillStyle="#888";
-      } else {
-        ctx.fillStyle="#a03";
-      }
-      ctx.fillRect(ex,ey,60,80);
-      ctx.fillStyle=BACKGROUND_COLOR;
-      ctx.fillRect(ex+2,ey+22,56,56);
-      ctx.fillStyle="white";
-      ctx.font="20px Arial";
-      ctx.fillText(
-        e.min===e.max?e.min:`${e.min}-${e.max}`,
-        ex+4,ey+20
-        );
+function drawEnemy(e,previewValue,ex,ey) {
+  if(enemyDie(e,previewValue)) {
+    ey += 20
+    ctx.fillStyle="#888";
+  } else {
+    ctx.fillStyle="#a03";
+  }
+  ctx.fillRect(ex,ey,60,80);
+  ctx.fillStyle=BACKGROUND_COLOR;
+  ctx.fillRect(ex+2,ey+22,56,56);
+  ctx.fillStyle="white";
+  ctx.font="20px Arial";
+  ctx.fillText(
+    e.min===e.max?e.min:`${e.min}-${e.max}`,
+    ex+4,ey+20
+    );
 
-      ctx.save();
-      ctx.translate(ex+2,ey+22);
-      e.draw();
-      ctx.restore();
-    }
+  ctx.save();
+  ctx.translate(ex+2,ey+22);
+  e.draw();
+  ctx.restore();
+}
 
-    function drawBtn(btn) {
-      ctx.fillStyle = btn.color;
-      const scaledX = btn.x * canvas.width/GAME_WIDTH;
-      const scaledY = btn.y * canvas.height/GAME_HEIGHT;
-      const scaledW = btn.w * canvas.width/GAME_WIDTH;
-      const scaledH = BUTTON_HEIGHT * canvas.height/GAME_HEIGHT;
+function drawBtn(btn) {
+  ctx.fillStyle = btn.color;
+  const scaledX = btn.x * canvas.width / GAME_WIDTH;
+  const scaledY = btn.y * canvas.height / GAME_HEIGHT;
+  const scaledW = btn.w * canvas.width / GAME_WIDTH;
+  const scaledH = BUTTON_HEIGHT * canvas.height / GAME_HEIGHT;
 
-      ctx.fillRect(scaledX,scaledY,scaledW,scaledH);
-      ctx.fillStyle="white";
-      const label=btn.name(context);
-      const measure = ctx.measureText(label);
-      ctx.fillText(label,scaledX + scaledW/2 - measure.width/2, scaledY + scaledH/2);
-    }
+  ctx.fillRect(scaledX,scaledY,scaledW,scaledH);
+  ctx.fillStyle="white";
+  ctx.font="16px Arial";
+  const label=btn.name(context);
+  const labels = btn.name(context).split(" ");
+  labels.forEach((label,i)=> {
+    ctx.fillText(label,scaledX + scaledW/2 - ctx.measureText(label).width/2, scaledY + scaledH/2 + i*18);
+  });
+}
 
-    requestAnimationFrame(draw);
-  </script>
+function drawDice(number) {
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(canvas.width/2, canvas.height-BUTTON_H_SCALED, 50, 0, 2 * Math.PI);
+  ctx.fill();
+
+  const values = [1,2,3,4,5,6];
+  ctx.font="22px Arial";
+  ctx.fillStyle="#000";
+  const angle = 360/values.length;
+  values.forEach((v,i)=> {
+  ctx.save();
+  ctx.translate(canvas.width/2, canvas.height-BUTTON_H_SCALED);
+  ctx.rotate(angle * (i-(number-1)) * Math.PI/180);
+  ctx.fillText(v,0-ctx.measureText(v).width/2,-25);
+  ctx.restore();
+  });
+
+  ctx.fillStyle = "#333";
+  ctx.beginPath();
+  ctx.moveTo(canvas.width/2-5, canvas.height-BUTTON_H_SCALED);
+  ctx.lineTo(canvas.width/2+5, canvas.height-BUTTON_H_SCALED);
+  ctx.lineTo(canvas.width/2, canvas.height-BUTTON_H_SCALED-15);
+  ctx.closePath();
+  ctx.fill();
+}
+
+requestAnimationFrame(draw);
+</script>
