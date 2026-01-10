@@ -21,7 +21,24 @@
     <textarea id="log" readonly style="background:#000; color: #0f0; border-color: #0f0; border-style: solid; border-width: 2px; height: 100px;"></textarea>
   </div>
 </body>
+<script>
 
+/* ================== GLOBAL CONSTANTS ================== */
+
+  const FPS = 30;
+  const TICK_TIME = FPS/1000.0;
+
+  const ROLL_TIME = 0
+  const ENEMY_TIME = 1
+  const END_TURN_TIME = 2
+  const END_ROUND_TIME = 3
+
+  const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+</script>
+<script type="text/javascript" src="dice.js"></script>
+<script type="text/javascript" src="active_cards.js"></script>
+<script type="text/javascript" src="passive_cards.js"></script>
+<script type="text/javascript" src="game_context.js"></script>
 <script>
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
@@ -48,6 +65,8 @@
   const MAX_LOGS = 50;
 
   function log(msg, data = null) {
+    if(msg == null || msg.length == 0)
+      return;
     const text = data ? `${msg} ${JSON.stringify(data)}` : msg;
     console.log("[GAME]", text);
     logLines.push(text);
@@ -57,29 +76,9 @@
     logArea.scrollTop = logArea.scrollHeight;
   }
 
-/* ================== CONTEXT ================== */
-  const context = {
-    level : 1,
-    shield : 10,
-    rollValue: null,
-    calcValue: null,
-    phase: null,
-    passedTurn: false,
-    activeCards: [],
-    passiveCards: {},
-    enemies: [],
-    turnKill: 0,
-    enemyRoll:null,
-    playCards: []
-  };
-
 /* ================== UTILS ================== */
 
   const BACKGROUND_COLOR = '#222'
-
-  const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-
-  const normalize = (a)=>{while(a < 0) a+= 6;a = a % 6; if(a==0) a = 6; return a}
 
   const GAME_PHASES = [
     {name:"roll", desc: "Rolar dado"},
@@ -88,74 +87,30 @@
     {name:"gameover", desc: "Fim de jogo"},
   ];
 
-  const ROLL_TIME = 0
-  const ENEMY_TIME = 1
-  const END_TURN_TIME = 2
-  const END_ROUND_TIME = 3
 
   const BUTTONS = [
-    { x:310,y:550,w:180,name:()=>"ROLAR",status:()=>context.phase.name==="roll",
+    { x:310,y:550,w:180,name:()=>"ROLAR",status:()=>GAME_CONTEXT.phase.name==="roll",
       color:'#2a2',
       effect:()=>{
-        rollPlayer(context)
+        rollPlayer(GAME_CONTEXT)
       }
     },
-    { x:310,y:550,w:180,name:()=>"ATACAR",status:()=>context.phase.name==="decision",
+    { x:310,y:550,w:180,name:()=>"ATACAR",status:()=>GAME_CONTEXT.phase.name==="decision",
       color:'#2a2',
       effect:()=>{
-        resolveTurn(context)
+        resolveTurn(GAME_CONTEXT)
       }
     },
-    { x:310,y:550,w:180,name:(ctx)=>`DEFENDER ${ctx.enemyRoll}`,status:()=>context.phase.name==="enemy",
+    { x:310,y:550,w:180,name:(context)=>`DEFENDER ${context.enemyRoll}`,status:()=>GAME_CONTEXT.phase.name==="enemy",
     color:'#c70a0a',
     effect:()=>{
-      resolveEnemyTurn(context)
+      resolveEnemyTurn(GAME_CONTEXT)
     }
   }
 ]
 var DESCRIPTION = null;
 var SCORE = 0;
 const ENEMY_POINT = 15;
-
-/* ================== CARDS ================== */
-const AC_CARDS = [
-  { name:"+1", effect:(ctx) => ctx.calcValue+1, description: "+1 no valor de ataque" },
-  { name:"+2", effect:(ctx) => ctx.calcValue+2, description: "+2 no valor de ataque" },
-  { name:"-1", effect:(ctx) => ctx.calcValue-1, description: "-1 no valor de ataque" },
-  { name:"-2", effect:(ctx) => ctx.calcValue-2, description: "-2 no valor de ataque" },
-  { name:"set 3", effect:(ctx) => 3, description: "valor de ataque definido para 3" },
-  { name:"set 1", effect:(ctx) => 1, description: "valor de ataque definido para 1" },
-  { name:"set 6", effect:(ctx) => 6, description: "valor de ataque definido para 6" },
-  { name:"Rouba vida", effect:(ctx) => {ctx.shield += ctx.calcValue; return ctx.calcValue }, description: "ganha escudo de acordo com o valor de ataque"},
-]
-function newActiveCard() {
-  const c = AC_CARDS[rand(0,AC_CARDS.length-1)];
-  log("Nova carta ativa:", c.name);
-  return { ...c, used:false };
-}
-const PC_CARDS = [
-  { name:"Sempre +1", effect:(ctx) => ctx.calcValue+1,time:ROLL_TIME, description: "+1 no valor do dado" },
-  { name:"Sempre -1", effect:(ctx) => ctx.calcValue-1, time:ROLL_TIME, description: "-1 no valor do dado" },
-  { name:"Par +1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue+1:ctx.calcValue, time:ROLL_TIME, description: "+1 no valor do dado, se ele for par" },
-  { name:"Impar +1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue:ctx.calcValue+1, time:ROLL_TIME, description: "+1 no valor do dado, se ele for impar" },
-  { name:"Par -1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue-1:ctx.calcValue, time:ROLL_TIME, description: "-1 no valor do dado, se ele for par" },
-  { name:"Impar -1", effect:(ctx) => ctx.rollValue%2===0?ctx.calcValue:ctx.calcValue-1, time:ROLL_TIME, description: "-1 no valor do dado, se ele for impar" },
-  { name:"Barreira +1", effect:(ctx) => ctx.enemyRoll-1, time:ENEMY_TIME, description: "-1 no valor do dano dos inimigos" },
-  { name:"Escudo +1", effect:(ctx) => ctx.shield+=1, time:END_ROUND_TIME, description: "+1 de escudo ao final da fase" },
-  { name:"Rouba alma", effect:(ctx) => ctx.shield+=ctx.turnKill, time:END_TURN_TIME, description: "+1 de escudo para cada inimigo derrotado" },
-  { name:"Level +1", effect:(ctx) => ctx.level+=1, time:END_ROUND_TIME, description: "+1 nivel no final da fase" },
-  { name:"Gambler", effect:(ctx) => refreshCards(ctx,1), time:END_TURN_TIME, description: "troca uma carta aleatória ao final de cada turno" }
-]
-function newPassiveCard() {
-  let c = PC_CARDS[rand(0,PC_CARDS.length-1)];
-  if(context.passiveCards[c.name]) {
-    context.passiveCards[c.name].amount += 1;
-  } else {
-    c = { ...c, amount:1}
-    context.passiveCards[c.name] = c;
-  }
-  return c;
-}
 
 /* ================== ENEMIES ================== */
 const ENEMY_DRAW = [
@@ -276,130 +231,96 @@ function newEnemy() {
   return {min:a,max:Math.min(b,6),hp:1,draw:ENEMY_DRAW[rand(0,ENEMY_DRAW.length-1)]};
 }
 
-function spawnEnemies(ctx) {
-  ctx.enemies=[];
-  let amount = rand(ctx.level,3+ctx.level)
+function spawnEnemies(context) {
+  context.enemies=[];
+  let amount = rand(context.level,3+context.level)
   for(let i=0;i<amount;i++)
-    ctx.enemies.push(newEnemy());
-  log("Inimigos gerados:", ctx.enemies.length);
+    context.enemies.push(newEnemy());
+  log("Inimigos gerados:", context.enemies.length);
 }
 
 /* ================== FLOW ================== */
 function startRound() {
-  log("=== INÍCIO DA RODADA | Nível " + context.level + " ===");
-  spawnEnemies(context);
-  renewCards(context);
+  log("=== INÍCIO DA RODADA | Nível " + GAME_CONTEXT.level + " ===");
+  spawnEnemies(GAME_CONTEXT);
+  const cards = context_renewCards(GAME_CONTEXT,3);
+  cards.forEach(c=>log(`Nova carta ativa: ${c.name}`));
   resetTurn()
 }
 
 function resetTurn() {
-  context.rollValue=null;
-  context.calcValue=null;
-  context.enemyRoll=null;
-  context.passedTurn=false;
-  context.playCards = []
-  context.turnKill = 0;
-  context.phase=GAME_PHASES[0];
+  GAME_CONTEXT.rollValue=null;
+  GAME_CONTEXT.calcValue=null;
+  GAME_CONTEXT.enemyRoll=null;
+  GAME_CONTEXT.passedTurn=false;
+  GAME_CONTEXT.playCards = []
+  GAME_CONTEXT.turnKill = 0;
+  GAME_CONTEXT.phase=GAME_PHASES[0];
 }
 
-function renewCards(ctx) {
-  ctx.activeCards = []
-  while(ctx.activeCards.length<3) ctx.activeCards.push(newActiveCard());
-}
-
-function refreshCards(ctx,amount) {
-  let index = rand(0,ctx.activeCards.length-1)
-  if(index < ctx.activeCards.length) {
-    ctx.activeCards.splice(index,1,newActiveCard())
-  }
-}
-newPassiveCard()
+newPassiveCard(GAME_CONTEXT)
 startRound();
 
 /* ================== GAME LOGIC ================== */
-function rollPlayer(ctx) {
-  ctx.passedTurn = false;
+function rollPlayer(context) {
+  context_resetTurn(context);
+  let value = context_rollDice(context);
 
-  ctx.rollValue = rand(1,6);
-  ctx.calcValue = ctx.rollValue;
-  log("Jogador rolou:", ctx.rollValue);
+  log(`Jogador rolou: ${value}`);
 
-  Object.values(ctx.passiveCards).forEach(p=>{
-    if(p.time == ROLL_TIME) {
-      const before=ctx.calcValue;
-      for(let i=0; i < p.amount; i++) {
-        ctx.calcValue=p.effect(ctx);
-      }
-      log(`Passiva ${p.name} ${p.amount}x:`, {before, after:ctx.calcValue});
-    }
-  });
+  value = passive_apply(context, ROLL_TIME);
+  value.split("\n").forEach(l=>log(l));
 
-  ctx.calcValue=normalize(ctx.calcValue);
-  log("Valor final após passivas:", ctx.calcValue);
-
-  ctx.phase=GAME_PHASES[1];
+  context.phase=GAME_PHASES[1];
 }
 
-function previewTurn(ctx) {
-  const ctx2 = {
-    ...ctx
+function previewTurn(context) {
+  const context2 = {...context};
+  if(context.calcValue != null) {
+    context_applyCards(context2);
   }
-  if(ctx.calcValue != null) {
-    ctx2.playCards.forEach(p=>{
-      const before=ctx2.calcValue;
-      ctx2.calcValue=p.effect(ctx2);
-    })
-    ctx2.calcValue=normalize(ctx2.calcValue);
-  }
-  return ctx2;
+  return context2;
 }
 
-function resolveTurn(ctx) {
-  if(ctx.playCards.length > 0) {
-    ctx.passedTurn = false;
-    ctx.playCards.forEach(p=>{
-      const before=ctx.calcValue;
-      ctx.calcValue=p.effect(ctx);
-      log(`Ativa ${p.name}:`, {before, after:ctx.calcValue});
-      p.used = true
-    })
-    ctx.playCards = []
+function resolveTurn(context) {
+  let logs;
+  if(context.playCards.length > 0) {
+    context.passedTurn = false;
+    logs = context_applyCards(context, true);
+    logs.split("\n").forEach(l=>log(l));
+    context.playCards = [];
   } else {
-    ctx.passedTurn = true;
+    context.passedTurn = true;
   }
-  ctx.calcValue=normalize(ctx.calcValue)
 
-  let diceValue = ctx.calcValue;
+  let diceValue = context.calcValue;
   log("Resolvendo rodada com valor final:", diceValue);
   let killed=false;
 
-  ctx.enemies.forEach(e=>{
+  context.enemies.forEach(e=>{
     if(enemyDie(e,diceValue)) {
       e.hp=0;
       killed=true;
       log("Inimigo derrotado:", `${e.min}-${e.max}`);
-      ctx.turnKill += 1;
+      context.turnKill += 1;
     }
   });
+  if(context.turnKill == 0) {
+    log("Ataque falhou");
+  }
 
-  SCORE += ctx.turnKill*ctx.level*(ENEMY_POINT*ctx.turnKill);
+  SCORE += context.turnKill*context.level*(ENEMY_POINT*context.turnKill);
 
-  context.enemies=context.enemies.filter(e=>e.hp>0);
+  context.enemies = context.enemies.filter(e=>e.hp>0);
 
-  Object.values(ctx.passiveCards).forEach(p=>{
-    if(p.time == END_TURN_TIME) {
-      for(let i=0; i < p.amount; i++) {
-        p.effect(ctx);
-      }
-      log(`Passiva ${p.name} ${p.amount}x`);
-    }
-  });
+  logs = passive_apply(context, END_TURN_TIME);
+  logs.split("\n").forEach(l=>log(l));
 
   if(killed) {
-    if(context.enemies.length===0) nextLevel(ctx);
+    if(context.enemies.length===0) nextLevel(context);
     else resetTurn();
   } else {
-    enemyAttack(ctx);
+    enemyAttack(context);
   }
 }
 
@@ -409,48 +330,38 @@ function enemyDie(e,diceValue) {
   return diceValue>=e.min && diceValue<=e.max;
 }
 
-function nextLevel(ctx) {
-  Object.values(ctx.passiveCards).forEach(p=>{
-    if(p.time == END_ROUND_TIME) {
-      for(let i=0; i < p.amount; i++) {
-        p.effect(ctx);
-      }
-      log(`Passiva ${p.name} ${p.amount}x`);
-    }
-  });
+function nextLevel(context) {
+  logs = passive_apply(context, END_ROUND_TIME);
+  logs.split("\n").forEach(l=>log(l));
 
-  ctx.level++;
-  log("Subiu de nível:", ctx.level);
-  newPassiveCard();
+  const level = context_addLevel(context,1);
+  log("Subiu de nível:", level);
+  const card = newPassiveCard(context);
+  log(`Nova passiva: ${card.name}`);
   startRound();
 }
 
-function enemyAttack(ctx) {
-  ctx.phase = GAME_PHASES[2]
+function enemyAttack(context) {
+  context.phase = GAME_PHASES[2]
 
-  ctx.enemyRoll=rand(Math.ceil(ctx.enemies.length/2),ctx.enemies.length)*Math.ceil(ctx.level/2);
-  Object.values(ctx.passiveCards).forEach(p=>{
-    if(p.time == ENEMY_TIME) {
-      const before=ctx.enemyRoll;
-      for(let i=0; i < p.amount; i++) {
-        ctx.enemyRoll=p.effect(ctx);
-      }
-      log(`Passiva ${p.name} ${p.amount}x:`, {before, after:ctx.enemyRoll});
-    }
-  });
-  ctx.enemyRoll=Math.max(ctx.enemyRoll,1);
+  context.enemyRoll = rand(Math.ceil(context.enemies.length/2),context.enemies.length)*Math.ceil(context.level/2);
+
+  logs = passive_apply(context, ENEMY_TIME);
+  logs.split("\n").forEach(l=>log(l));
 }
 
-function resolveEnemyTurn(ctx) {
-  ctx.shield-=ctx.enemyRoll;
-  log("Inimigo atacou:", {roll:ctx.enemyRoll,shield:ctx.shield});
+function resolveEnemyTurn(context) {
+  const before = context.shield;
+  const after = context_addShield(context,-context.enemyRoll);
+  log(`Inimigo atacou com ${context.enemyRoll}: escudo ${before} - ${after}`);
 
-  if(ctx.shield<=0) {
+  if(after<=0) {
     log("GAME OVER");
-    ctx.phase=GAME_PHASES[3];
+    context.phase=GAME_PHASES[3];
   } else {
-    if(ctx.passedTurn) {
-      renewCards(ctx)
+    if(context.passedTurn) {
+      const cards = context_renewCards(context,3);
+      cards.forEach(c=>log(`Nova carta ativa: ${c.name}`));
     }
     resetTurn();
   }
@@ -474,16 +385,12 @@ canvas.addEventListener("click",e=>{
     }
   }
 
-  if(context.phase.name === "decision") {
-    context.activeCards.forEach((c,i) => {
+  if(GAME_CONTEXT.phase.name === "decision") {
+    GAME_CONTEXT.activeCards.forEach((c,i) => {
       const cx=canvas.width/2-160+i*110;
       const cy=canvas.height-200-BUTTON_H_SCALED;
       if(!c.used && x>cx && x<cx+100 && y>cy && y<cy+120) {
-        if(context.playCards.includes(c)) {
-          context.playCards=context.playCards.filter(item => item !== c)
-        } else {
-          context.playCards.push(c)
-        }
+        context_playCard(GAME_CONTEXT, c);
       }
     });
   }
@@ -495,7 +402,7 @@ canvas.addEventListener("mousemove",e=>{
   const cx=e.clientX,cy=e.clientY;
 
   let i=0;
-  for(const c of Object.values(context.passiveCards)) {
+  for(const c of Object.values(GAME_CONTEXT.passiveCards)) {
     const x = 20;
     const y = 50+i*60;
     const w = 160;
@@ -515,10 +422,10 @@ canvas.addEventListener("mousemove",e=>{
   i=0;
 
   let c_b_y=canvas.height-170-BUTTON_H_SCALED
-  for(const c of context.activeCards) {
+  for(const c of GAME_CONTEXT.activeCards) {
     const x=canvas.width/2-160+i*110;
     let y = c_b_y;
-    if(context.phase.name == "decision" && !c.used) {
+    if(GAME_CONTEXT.phase.name == "decision" && !c.used) {
       y -= 30;
     }
     const w = 100;
@@ -538,14 +445,15 @@ canvas.addEventListener("mousemove",e=>{
 });
 
 /* ================== DRAW ================== */
-function draw() {
+function draw(delta) {
   ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.fillStyle=BACKGROUND_COLOR;
   ctx.fillRect(0,0,canvas.width,canvas.height);
   let label;
 
   // Passives
-  Object.values(context.passiveCards).forEach((p,i)=>{
+  Object.values(GAME_CONTEXT.passiveCards).forEach((p,i)=>{
+    ctx.font="18px Arial";
     let size = 5;
     let line = Math.floor(i/size);
     let x = 10 + line*170;
@@ -555,7 +463,6 @@ function draw() {
     ctx.fillStyle="white";
     ctx.fillText(p.name,x+10,y+30);
     if(p.amount > 1) {
-      ctx.font="18px Arial";
       ctx.fillStyle="#400";
       ctx.beginPath();
       ctx.arc(x+140, y+25, 15, 0, 2 * Math.PI);
@@ -567,16 +474,16 @@ function draw() {
     }
   });
 
-  const previewValue = previewTurn(context).calcValue
+  const previewValue = previewTurn(GAME_CONTEXT).calcValue
   // Enemies
   let e_line = 12;
   if(VERTICAL)
     e_line = 4;
-  let lines = context.enemies.length/e_line
+  let lines = GAME_CONTEXT.enemies.length/e_line
   let e_b_y = canvas.height/2-60*lines;
-  context.enemies.forEach((e,i)=>{
+  GAME_CONTEXT.enemies.forEach((e,i)=>{
     const line = Math.floor(i/e_line);
-    const ex=canvas.width/2-Math.min(context.enemies.length-line*e_line,e_line)*40+(i%e_line)*80;
+    const ex=canvas.width/2-Math.min(GAME_CONTEXT.enemies.length-line*e_line,e_line)*40+(i%e_line)*80;
     let ey = e_b_y + line*70;
 
     drawEnemy(e,previewValue,ex,ey);
@@ -586,16 +493,16 @@ function draw() {
   ctx.font="18px Arial";
   let c_b_y=canvas.height-170-BUTTON_H_SCALED
   let fColor = "#3366cc";
-  if(context.phase.name != "decision") {
+  if(GAME_CONTEXT.phase.name != "decision") {
     fColor = "#142a57";
   }
-  context.activeCards.forEach((c,i)=>{
+  GAME_CONTEXT.activeCards.forEach((c,i)=>{
     const cx=canvas.width/2-160+i*110;
     let cy = c_b_y;
-    if(context.phase.name == "decision" && !c.used) {
+    if(GAME_CONTEXT.phase.name == "decision" && !c.used) {
       cy -= 30;
     }
-    if(context.playCards.includes(c)) {
+    if(GAME_CONTEXT.playCards.includes(c)) {
       cy-=10;
       ctx.fillStyle="#2a2";
       ctx.fillRect(cx-3,cy-3,106,126);
@@ -607,7 +514,7 @@ function draw() {
     names.forEach((name,i)=> {
       ctx.fillText(name,cx+50-ctx.measureText(name).width/2,cy+65+i*18);
     });
-      
+
   });
 
   // ROLLs
@@ -615,12 +522,13 @@ function draw() {
   ctx.beginPath();
   ctx.arc(canvas.width/2, canvas.height-50-BUTTON_H_SCALED, 25, 0, 2 * Math.PI);
   ctx.fill();
-  drawDice(previewValue);
 
-  if(context.rollValue) {
+  drawDice(DICE, ctx, previewValue, delta, canvas.width/2, canvas.height-BUTTON_H_SCALED);
+
+  if(GAME_CONTEXT.rollValue) {
     ctx.font="18px Arial";
     ctx.fillStyle="#777";
-    label=context.rollValue;
+    label=GAME_CONTEXT.rollValue;
     ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, canvas.height-55-BUTTON_H_SCALED);
   }
 
@@ -638,7 +546,7 @@ function draw() {
   ctx.fill();
   ctx.font="30px Arial";
   ctx.fillStyle="#fff";
-  let shieldLabel=context.shield;
+  let shieldLabel=GAME_CONTEXT.shield;
   ctx.fillText(shieldLabel,lx-ctx.measureText(shieldLabel).width/2,ly+10);
   ctx.font="15px Arial";
   ctx.fillStyle="#fff";
@@ -647,14 +555,14 @@ function draw() {
 
   ctx.font="20px Arial";
   if(VERTICAL)
-    ctx.fillText(`Nível: ${context.level}`,canvas.width-100,ly+12);
+    ctx.fillText(`Nível: ${GAME_CONTEXT.level}`,canvas.width-100,ly+12);
   else
-    ctx.fillText(`Nível: ${context.level}`,lx+size*2+10,ly+12);
+    ctx.fillText(`Nível: ${GAME_CONTEXT.level}`,lx+size*2+10,ly+12);
 
   // Phase label
   ctx.font="22px Arial";
   ctx.fillStyle="#f5f5f5";
-  label=context.phase.desc;
+  label=GAME_CONTEXT.phase.desc;
   ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, 40);
   ctx.font="18px Arial";
   ctx.fillStyle="#faefb6";
@@ -669,14 +577,12 @@ function draw() {
   }
 
   // GAME OVER
-  if(context.phase && context.phase.name==="gameover") {
+  if(GAME_CONTEXT.phase && GAME_CONTEXT.phase.name==="gameover") {
     ctx.fillStyle="#000";
     ctx.fillRect(canvas.width/2-140, canvas.height/2-40, 280, 50);
     ctx.fillStyle="red";
     ctx.font="40px Arial";
     ctx.fillText("GAME OVER",canvas.width/2-120,canvas.height/2);
-  } else {
-    requestAnimationFrame(draw);
   }
 
   // DESCRIPTION
@@ -725,39 +631,26 @@ function drawBtn(btn) {
   ctx.fillRect(scaledX,scaledY,scaledW,scaledH);
   ctx.fillStyle="white";
   ctx.font="16px Arial";
-  const label=btn.name(context);
-  const labels = btn.name(context).split(" ");
+  const label=btn.name(GAME_CONTEXT);
+  const labels = btn.name(GAME_CONTEXT).split(" ");
   labels.forEach((label,i)=> {
     ctx.fillText(label,scaledX + scaledW/2 - ctx.measureText(label).width/2, scaledY + scaledH/2 + i*18);
   });
 }
 
-function drawDice(number) {
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.arc(canvas.width/2, canvas.height-BUTTON_H_SCALED, 50, 0, 2 * Math.PI);
-  ctx.fill();
+var lastTime = null;
+function loop() {
+  const timeNow = Date.now();
+  let timePass = 0;
+  if(lastTime != null) {
+    timePass = timeNow - lastTime;
+  }
+  lastTime = timeNow;
+  draw(timePass*TICK_TIME);
 
-  const values = [1,2,3,4,5,6];
-  ctx.font="22px Arial";
-  ctx.fillStyle="#000";
-  const angle = 360/values.length;
-  values.forEach((v,i)=> {
-  ctx.save();
-  ctx.translate(canvas.width/2, canvas.height-BUTTON_H_SCALED);
-  ctx.rotate(angle * (i-(number-1)) * Math.PI/180);
-  ctx.fillText(v,0-ctx.measureText(v).width/2,-25);
-  ctx.restore();
-  });
-
-  ctx.fillStyle = "#333";
-  ctx.beginPath();
-  ctx.moveTo(canvas.width/2-5, canvas.height-BUTTON_H_SCALED);
-  ctx.lineTo(canvas.width/2+5, canvas.height-BUTTON_H_SCALED);
-  ctx.lineTo(canvas.width/2, canvas.height-BUTTON_H_SCALED-15);
-  ctx.closePath();
-  ctx.fill();
+  if(GAME_CONTEXT.phase != null || GAME_CONTEXT.phase.name!=="gameover") {
+    requestAnimationFrame(loop);
+  }
 }
-
-requestAnimationFrame(draw);
+requestAnimationFrame(loop);
 </script>
