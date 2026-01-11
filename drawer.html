@@ -27,7 +27,11 @@
         </div>
       </div>
     </div>
-    <textarea id="output" placeholder="// fillRect aparecerá aqui"></textarea>
+    <div>
+      <textarea id="output" placeholder="// fillRect aparecerá aqui"></textarea><br>
+      <button onclick="savePNG()">Salvar PNG</button>
+    </div>
+
   </div>
 
   <script>
@@ -132,6 +136,21 @@
 
 // desenha primeira vez
     redrawCanvas();
+
+    function savePNG() {
+      const virtual_canvas = document.createElement('canvas');
+      virtual_canvas.width = P_SIZE;
+      virtual_canvas.height = P_SIZE;
+      const fn = new Function('ctx', 'canvas', output.value);
+      const virtual_ctx = virtual_canvas.getContext('2d');
+      fn(virtual_ctx, virtual_canvas);
+
+      const url = virtual_canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'desenho.png';
+      a.click();
+    }
   </script>
 
 </body>

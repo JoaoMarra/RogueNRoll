@@ -34,8 +34,11 @@
   const END_ROUND_TIME = 3
 
   const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+
+  const drawSprite = (x,y,sheet,i)=>{const size = sheet.height; ctx.drawImage(sheet,i*size,0,size,size,x,y,size,size)}
 </script>
 <script type="text/javascript" src="dice.js"></script>
+<script type="text/javascript" src="enemy.js"></script>
 <script type="text/javascript" src="active_cards.js"></script>
 <script type="text/javascript" src="passive_cards.js"></script>
 <script type="text/javascript" src="game_context.js"></script>
@@ -87,7 +90,6 @@
     {name:"gameover", desc: "Fim de jogo"},
   ];
 
-
   const BUTTONS = [
     { x:310,y:550,w:180,name:()=>"ROLAR",status:()=>GAME_CONTEXT.phase.name==="roll",
       color:'#2a2',
@@ -113,122 +115,14 @@ var SCORE = 0;
 const ENEMY_POINT = 15;
 
 /* ================== ENEMIES ================== */
-const ENEMY_DRAW = [
-  ()=> {
-    ctx.fillStyle="green";
-    ctx.fillRect(10, 44, 8,8)
-    ctx.fillRect(38, 44, 8,8)
 
-    ctx.fillRect(18, 24, 20,20)
-
-    ctx.fillRect(10, 24, 8,8)
-    ctx.fillRect(6, 32, 8,8)
-
-    ctx.fillRect(38, 24, 8,8)
-    ctx.fillRect(42, 32, 8,8)
-    ctx.fillRect(22, 12, 12,12)
-    ctx.fillStyle="brown";
-    ctx.fillRect(22, 14, 12,2)
-    ctx.fillStyle="white";
-    ctx.fillRect(24, 16, 2,2)
-    ctx.fillRect(32, 16, 2,2)
-  },
-  ()=> {
-    ctx.fillStyle="#f00";
-    ctx.fillRect(6, 18, 6, 6);
-    ctx.fillRect(12, 18, 6, 6);
-    ctx.fillRect(12, 12, 6, 6);
-    ctx.fillRect(18, 12, 6, 6);
-    ctx.fillRect(18, 18, 6, 6);
-    ctx.fillRect(24, 18, 6, 6);
-    ctx.fillRect(24, 24, 6, 6);
-    ctx.fillRect(24, 30, 6, 6);
-    ctx.fillRect(24, 36, 6, 6);
-    ctx.fillRect(30, 36, 6, 6);
-    ctx.fillRect(36, 36, 6, 6);
-    ctx.fillRect(42, 36, 6, 6);
-    ctx.fillRect(42, 42, 6, 6);
-    ctx.fillRect(36, 42, 6, 6);
-    ctx.fillRect(30, 42, 6, 6);
-    ctx.fillRect(24, 42, 6, 6);
-    ctx.fillRect(30, 48, 6, 6);
-    ctx.fillRect(42, 48, 6, 6);
-    ctx.fillRect(18, 42, 6, 6);
-    ctx.fillRect(42, 30, 6, 6);
-    ctx.fillRect(42, 24, 6, 6);
-    ctx.fillRect(42, 18, 6, 6);
-    ctx.fillRect(48, 18, 6, 6);
-    ctx.fillStyle="#fff";
-    ctx.fillRect(15, 15, 3, 3);
-    ctx.fillRect(9, 24, 3, 3);
-    ctx.fillRect(15, 24, 3, 3);
-    ctx.fillRect(18, 12, 3, 3);
-  },
-  ()=> {
-    ctx.fillStyle="#1e60c9";
-    ctx.fillRect(30, 20, 10, 10);
-    ctx.fillRect(20, 10, 10, 10);
-    ctx.fillRect(20, 20, 10, 10);
-    ctx.fillRect(30, 30, 10, 10);
-    ctx.fillRect(36, 36, 6, 6);
-    ctx.fillRect(42, 42, 6, 6);
-    ctx.fillRect(24, 36, 6, 6);
-    ctx.fillRect(18, 42, 6, 6);
-    ctx.fillRect(30, 18, 6, 6);
-    ctx.fillRect(16, 12, 4, 12);
-    ctx.fillStyle="#0f397d";
-    ctx.fillRect(32, 24, 4, 4);
-    ctx.fillRect(28, 28, 4, 4);
-    ctx.fillRect(20, 28, 4, 4);
-    ctx.fillRect(16, 32, 4, 4);
-    ctx.fillRect(20, 32, 4, 4);
-    ctx.fillStyle="#fff";
-    ctx.fillRect(20, 16, 2, 2);
-    ctx.fillRect(18, 14, 2, 2);
-    ctx.fillRect(26, 16, 2, 2);
-    ctx.fillRect(28, 14, 2, 2);
-    ctx.fillRect(22, 22, 2, 2);
-    ctx.fillRect(26, 22, 2, 2);
-  },
-  ()=> {
-    ctx.fillStyle="#4b237d";
-    ctx.fillRect(20, 20, 12, 8);
-    ctx.fillRect(24, 16, 4, 4);
-    ctx.fillRect(20, 12, 4, 4);
-    ctx.fillRect(28, 12, 4, 4);
-    ctx.fillRect(14, 28, 28, 14);
-    ctx.fillRect(21, 42, 7, 7);
-    ctx.fillRect(14, 49, 7, 7);
-    ctx.fillRect(28, 42, 7, 7);
-    ctx.fillRect(35, 49, 7, 7);
-    ctx.fillRect(7, 35, 7, 7);
-    ctx.fillRect(42, 35, 7, 7);
-    ctx.fillStyle="#fff";
-    ctx.fillRect(24, 24, 2, 2);
-    ctx.fillRect(22, 24, 2, 2);
-    ctx.fillRect(22, 22, 2, 2);
-    ctx.fillRect(28, 24, 2, 2);
-    ctx.fillRect(26, 24, 2, 2);
-    ctx.fillRect(28, 22, 2, 2);
-    ctx.fillRect(20, 34, 2, 2);
-    ctx.fillRect(18, 36, 2, 2);
-    ctx.fillRect(16, 38, 2, 2);
-    ctx.fillRect(34, 34, 2, 2);
-    ctx.fillRect(36, 36, 2, 2);
-    ctx.fillRect(38, 38, 2, 2);
-    ctx.fillRect(40, 40, 2, 2);
-    ctx.fillRect(14, 40, 2, 2);
-    ctx.fillRect(12, 40, 2, 2);
-    ctx.fillRect(42, 40, 2, 2);
-  }
-]
 function newEnemy() {
   if (Math.random()<0.5) {
     const v=rand(1,6);
-    return {min:v,max:v,hp:1,draw:ENEMY_DRAW[rand(0,ENEMY_DRAW.length-1)]};
+    return {min:v,max:v,hp:1,data:ENEMIES[rand(0,ENEMIES.length-1)]};
   }
   let a=rand(1,5), b=rand(a+1,a+3);
-  return {min:a,max:Math.min(b,6),hp:1,draw:ENEMY_DRAW[rand(0,ENEMY_DRAW.length-1)]};
+  return {min:a,max:Math.min(b,6),hp:1,data:ENEMIES[rand(0,ENEMIES.length-1)]};
 }
 
 function spawnEnemies(context) {
@@ -258,8 +152,12 @@ function resetTurn() {
   GAME_CONTEXT.phase=GAME_PHASES[0];
 }
 
-newPassiveCard(GAME_CONTEXT)
-startRound();
+
+function START_GAME() {
+  newPassiveCard(GAME_CONTEXT)
+  startRound();
+  requestAnimationFrame(loop);
+}
 
 /* ================== GAME LOGIC ================== */
 function rollPlayer(context) {
@@ -615,10 +513,7 @@ function drawEnemy(e,previewValue,ex,ey) {
     ex+4,ey+20
     );
 
-  ctx.save();
-  ctx.translate(ex+2,ey+22);
-  e.draw();
-  ctx.restore();
+  e.data.draw(ex+2,ey+22);
 }
 
 function drawBtn(btn) {
@@ -640,6 +535,9 @@ function drawBtn(btn) {
 
 var lastTime = null;
 function loop() {
+  if(GAME_CONTEXT.phase == null) {
+    return;
+  }
   const timeNow = Date.now();
   let timePass = 0;
   if(lastTime != null) {
@@ -652,5 +550,4 @@ function loop() {
     requestAnimationFrame(loop);
   }
 }
-requestAnimationFrame(loop);
 </script>

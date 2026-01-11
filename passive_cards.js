@@ -92,7 +92,7 @@ const PC_CARDS = [
 		}
 	},
 	{ 
-		name:"Gambler", time:END_TURN_TIME, description: "troca uma carta aleatória ao final de cada turno", 
+		name:"Apostar", time:END_TURN_TIME, description: "troca uma carta aleatória ao final de cada turno", 
 		effect:(ctx,amount) => {
 			return refreshActiveCards(ctx,amount)
 		} 
