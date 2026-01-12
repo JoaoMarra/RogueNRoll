@@ -3,6 +3,7 @@ const GAME_CONTEXT = {
     shield : 10,
     rollValue: null,
     calcValue: null,
+    previewValue: null,
     phase: null,
     passedTurn: false,
     activeCards: [],
@@ -15,11 +16,19 @@ const GAME_CONTEXT = {
 
 function context_resetTurn(context) {
     context.passedTurn = false;
+    context.rollValue=null;
+    context.calcValue=null;
+    context.previewValue=null;
+    context.enemyRoll=null;
+    context.playCards = []
+    context.turnKill = 0;
+    context.phase=GAME_PHASES[0];
 }
 
 function context_rollDice(context) {
     context.rollValue = rand(1,6);
     context.calcValue = context.rollValue;
+    context.previewValue = previewTurn(context).calcValue;
 
     return context.rollValue;
 }
@@ -77,6 +86,7 @@ function context_playCard(context, card) {
     } else {
         context.playCards.push(card)
     }
+    context.previewValue = previewTurn(context).calcValue;
 }
 
 function context_applyCards(context,use=false) {
@@ -89,4 +99,12 @@ function context_applyCards(context,use=false) {
         log += `Ativa ${p.name}: ${effect}\n`;
     });
     return log.replace(/\n+$/, '');
+}
+
+function previewTurn(context) {
+    const context2 = {...context};
+    if(context.calcValue != null) {
+        context_applyCards(context2);
+    }
+    return context2;
 }

@@ -141,8 +141,9 @@
       const virtual_canvas = document.createElement('canvas');
       virtual_canvas.width = P_SIZE;
       virtual_canvas.height = P_SIZE;
-      const fn = new Function('ctx', 'canvas', output.value);
       const virtual_ctx = virtual_canvas.getContext('2d');
+      virtual_ctx.fillStyle = "#fff";
+      const fn = new Function('ctx', 'canvas', output.value);
       fn(virtual_ctx, virtual_canvas);
 
       const url = virtual_canvas.toDataURL('image/png');

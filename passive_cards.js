@@ -120,5 +120,7 @@ function passive_apply(context, gameTime) {
 			log += `Passiva ${p.name} ${p.amount}x: ${effect}\n`;
 		}
 	});
+	
+    context.previewValue = previewTurn(context).calcValue;
 	return log.replace(/\n+$/, '');
 }

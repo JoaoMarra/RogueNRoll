@@ -23,7 +23,7 @@
 </body>
 <script>
 
-/* ================== GLOBAL CONSTANTS ================== */
+/* ================== GLOBAL CONSTANTS/FUNCTIONS ================== */
 
   const FPS = 30;
   const TICK_TIME = FPS/1000.0;
@@ -110,6 +110,8 @@
     }
   }
 ]
+var ENEMY_POS = [];
+var ACTIVE_POS = [];
 var DESCRIPTION = null;
 var SCORE = 0;
 const ENEMY_POINT = 15;
@@ -137,26 +139,52 @@ function spawnEnemies(context) {
 function startRound() {
   log("=== INÍCIO DA RODADA | Nível " + GAME_CONTEXT.level + " ===");
   spawnEnemies(GAME_CONTEXT);
+  positionsEnemies(GAME_CONTEXT);
   const cards = context_renewCards(GAME_CONTEXT,3);
   cards.forEach(c=>log(`Nova carta ativa: ${c.name}`));
-  resetTurn()
+  positionActiveCards(GAME_CONTEXT);
+  context_resetTurn(GAME_CONTEXT);
 }
-
-function resetTurn() {
-  GAME_CONTEXT.rollValue=null;
-  GAME_CONTEXT.calcValue=null;
-  GAME_CONTEXT.enemyRoll=null;
-  GAME_CONTEXT.passedTurn=false;
-  GAME_CONTEXT.playCards = []
-  GAME_CONTEXT.turnKill = 0;
-  GAME_CONTEXT.phase=GAME_PHASES[0];
-}
-
 
 function START_GAME() {
   newPassiveCard(GAME_CONTEXT)
   startRound();
   requestAnimationFrame(loop);
+}
+
+function positionsEnemies(context) {
+  ENEMY_POS = [];
+  let e_line = 12;
+  if(VERTICAL)
+    e_line = 4;
+  let lines = context.enemies.length/e_line;
+  let e_b_y = canvas.height/2-60*lines;
+  context.enemies.forEach((e,i)=>{
+    const line = Math.floor(i/e_line);
+    const ex=canvas.width/2-Math.min(context.enemies.length-line*e_line,e_line)*40+(i%e_line)*80;
+    let ey = e_b_y + line*70;
+
+    ENEMY_POS.push({
+      'x':ex,
+      'y':ey,
+      'enemy':e
+    });
+  });
+}
+
+function positionActiveCards(context) {
+  ACTIVE_POS = [];
+  const totalWidth = ACTIVE_WIDTH * context.activeCards.length + (10*(context.activeCards.length-1));
+  context.activeCards.forEach((c,i)=>{
+    const cx=canvas.width/2-totalWidth/2+i*(ACTIVE_WIDTH+10);
+    const cy = canvas.height-ACTIVE_HEIGHT-50-BUTTON_H_SCALED;
+
+    ACTIVE_POS.push({
+      'x':cx,
+      'y':cy,
+      'card':c
+    });
+  });
 }
 
 /* ================== GAME LOGIC ================== */
@@ -170,14 +198,6 @@ function rollPlayer(context) {
   value.split("\n").forEach(l=>log(l));
 
   context.phase=GAME_PHASES[1];
-}
-
-function previewTurn(context) {
-  const context2 = {...context};
-  if(context.calcValue != null) {
-    context_applyCards(context2);
-  }
-  return context2;
 }
 
 function resolveTurn(context) {
@@ -196,13 +216,14 @@ function resolveTurn(context) {
   let killed=false;
 
   context.enemies.forEach(e=>{
-    if(enemyDie(e,diceValue)) {
+    if(enemy_die(e,diceValue)) {
       e.hp=0;
       killed=true;
       log("Inimigo derrotado:", `${e.min}-${e.max}`);
       context.turnKill += 1;
     }
   });
+
   if(context.turnKill == 0) {
     log("Ataque falhou");
   }
@@ -215,17 +236,15 @@ function resolveTurn(context) {
   logs.split("\n").forEach(l=>log(l));
 
   if(killed) {
-    if(context.enemies.length===0) nextLevel(context);
-    else resetTurn();
+    if(context.enemies.length===0) {
+      nextLevel(context);
+    } else {
+      context_resetTurn(context);
+      positionsEnemies(context);
+    }
   } else {
     enemyAttack(context);
   }
-}
-
-function enemyDie(e,diceValue) {
-  if(diceValue == null)
-    return false
-  return diceValue>=e.min && diceValue<=e.max;
 }
 
 function nextLevel(context) {
@@ -260,8 +279,9 @@ function resolveEnemyTurn(context) {
     if(context.passedTurn) {
       const cards = context_renewCards(context,3);
       cards.forEach(c=>log(`Nova carta ativa: ${c.name}`));
+      positionActiveCards(context);
     }
-    resetTurn();
+    context_resetTurn(context);
   }
 }
 
@@ -284,20 +304,49 @@ canvas.addEventListener("click",e=>{
   }
 
   if(GAME_CONTEXT.phase.name === "decision") {
-    GAME_CONTEXT.activeCards.forEach((c,i) => {
-      const cx=canvas.width/2-160+i*110;
-      const cy=canvas.height-200-BUTTON_H_SCALED;
-      if(!c.used && x>cx && x<cx+100 && y>cy && y<cy+120) {
-        context_playCard(GAME_CONTEXT, c);
+    for(const c of ACTIVE_POS) {
+      if(!c.card.used && active_include(c,GAME_CONTEXT,x,y)) {
+        context_playCard(GAME_CONTEXT, c.card);
+        break;
       }
-    });
+    }
   }
 
 });
 
+var descriptionTimeout;
 canvas.addEventListener("mousemove",e=>{
   DESCRIPTION = null;
   const cx=e.clientX,cy=e.clientY;
+
+  for(const e of ENEMY_POS) {
+    if(enemy_includes(e,GAME_CONTEXT.previewValue,cx,cy)) {
+      DESCRIPTION = {
+        'x':cx,
+        'y':cy,
+        'label':e.enemy.data.name
+      };
+      if(descriptionTimeout != null)
+        clearTimeout(descriptionTimeout)
+      descriptionTimeout = setTimeout(clearDescription, 3000);
+      return;
+    }
+  }
+
+  for(const c of ACTIVE_POS) {
+    if(active_include(c,GAME_CONTEXT,cx,cy)) {
+      DESCRIPTION = {
+        'x':cx,
+        'y':cy,
+        'label':c.card.description
+      };
+      
+      if(descriptionTimeout != null)
+        clearTimeout(descriptionTimeout)
+      descriptionTimeout = setTimeout(clearDescription, 3000);
+      return;
+    }
+  }
 
   let i=0;
   for(const c of Object.values(GAME_CONTEXT.passiveCards)) {
@@ -318,29 +367,11 @@ canvas.addEventListener("mousemove",e=>{
     i++;
   }
   i=0;
-
-  let c_b_y=canvas.height-170-BUTTON_H_SCALED
-  for(const c of GAME_CONTEXT.activeCards) {
-    const x=canvas.width/2-160+i*110;
-    let y = c_b_y;
-    if(GAME_CONTEXT.phase.name == "decision" && !c.used) {
-      y -= 30;
-    }
-    const w = 100;
-    const h = 120;
-
-    if(cx >= x && cx <= x+w && cy >= y && cy <= y+h) {
-      DESCRIPTION = {
-        'x':cx,
-        'y':cy,
-        'label':c.description
-      }
-      break;
-    }
-
-    i++;
-  };
 });
+
+function clearDescription() {
+  DESCRIPTION = null;
+}
 
 /* ================== DRAW ================== */
 function draw(delta) {
@@ -372,47 +403,14 @@ function draw(delta) {
     }
   });
 
-  const previewValue = previewTurn(GAME_CONTEXT).calcValue
   // Enemies
-  let e_line = 12;
-  if(VERTICAL)
-    e_line = 4;
-  let lines = GAME_CONTEXT.enemies.length/e_line
-  let e_b_y = canvas.height/2-60*lines;
-  GAME_CONTEXT.enemies.forEach((e,i)=>{
-    const line = Math.floor(i/e_line);
-    const ex=canvas.width/2-Math.min(GAME_CONTEXT.enemies.length-line*e_line,e_line)*40+(i%e_line)*80;
-    let ey = e_b_y + line*70;
-
-    drawEnemy(e,previewValue,ex,ey);
+  ENEMY_POS.forEach(e=>{
+    enemy_draw(ctx,e.x,e.y,e.enemy,GAME_CONTEXT.previewValue);
   });
 
   // Active cards
-  ctx.font="18px Arial";
-  let c_b_y=canvas.height-170-BUTTON_H_SCALED
-  let fColor = "#3366cc";
-  if(GAME_CONTEXT.phase.name != "decision") {
-    fColor = "#142a57";
-  }
-  GAME_CONTEXT.activeCards.forEach((c,i)=>{
-    const cx=canvas.width/2-160+i*110;
-    let cy = c_b_y;
-    if(GAME_CONTEXT.phase.name == "decision" && !c.used) {
-      cy -= 30;
-    }
-    if(GAME_CONTEXT.playCards.includes(c)) {
-      cy-=10;
-      ctx.fillStyle="#2a2";
-      ctx.fillRect(cx-3,cy-3,106,126);
-    }
-    ctx.fillStyle=c.used?"#555":fColor;
-    ctx.fillRect(cx,cy,100,120);
-    ctx.fillStyle="white";
-    const names = c.name.split(" ");
-    names.forEach((name,i)=> {
-      ctx.fillText(name,cx+50-ctx.measureText(name).width/2,cy+65+i*18);
-    });
-
+  ACTIVE_POS.forEach(c=>{
+    active_draw(ctx,c.x,c.y,c.card,GAME_CONTEXT);
   });
 
   // ROLLs
@@ -421,7 +419,7 @@ function draw(delta) {
   ctx.arc(canvas.width/2, canvas.height-50-BUTTON_H_SCALED, 25, 0, 2 * Math.PI);
   ctx.fill();
 
-  drawDice(DICE, ctx, previewValue, delta, canvas.width/2, canvas.height-BUTTON_H_SCALED);
+  drawDice(DICE, ctx, GAME_CONTEXT.previewValue, delta, canvas.width/2, canvas.height-BUTTON_H_SCALED);
 
   if(GAME_CONTEXT.rollValue) {
     ctx.font="18px Arial";
@@ -494,26 +492,6 @@ function draw(delta) {
     ctx.fillText(DESCRIPTION.label,DESCRIPTION.x+4, DESCRIPTION.y+20);
   }
 
-}
-
-function drawEnemy(e,previewValue,ex,ey) {
-  if(enemyDie(e,previewValue)) {
-    ey += 20
-    ctx.fillStyle="#888";
-  } else {
-    ctx.fillStyle="#a03";
-  }
-  ctx.fillRect(ex,ey,60,80);
-  ctx.fillStyle=BACKGROUND_COLOR;
-  ctx.fillRect(ex+2,ey+22,56,56);
-  ctx.fillStyle="white";
-  ctx.font="20px Arial";
-  ctx.fillText(
-    e.min===e.max?e.min:`${e.min}-${e.max}`,
-    ex+4,ey+20
-    );
-
-  e.data.draw(ex+2,ey+22);
 }
 
 function drawBtn(btn) {

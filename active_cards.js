@@ -1,3 +1,7 @@
+
+const ACTIVE_WIDTH = 100;
+const ACTIVE_HEIGHT = 80;
+
 const AC_CARDS = [
 	{ 
 		name:"+1", description: "+1 no valor de ataque", 
@@ -84,4 +88,44 @@ function refreshActiveCards(context,amount) {
 			log += ", ";
 	}
 	return log;
+}
+
+const active_draw = (ctx,x,y,card,context) => {
+	let cx = x;
+	let cy = y;
+
+	let fColor = "#3366cc";
+	if(context.phase.name != "decision") {
+		fColor = "#142a57";
+	}
+	if(context.phase.name == "decision" && !card.used) {
+		cy -= 30;
+	}
+	if(context.playCards.includes(card)) {
+		cy-=10;
+		ctx.fillStyle="#2a2";
+		ctx.fillRect(cx-3,cy-3,ACTIVE_WIDTH+6,ACTIVE_HEIGHT+6);
+	}
+
+	ctx.font="18px Arial";
+	ctx.fillStyle=card.used?"#555":fColor;
+	ctx.fillRect(cx,cy,ACTIVE_WIDTH,ACTIVE_HEIGHT);
+	ctx.fillStyle="white";
+	const names = card.name.split(" ");
+	names.forEach((name,i)=> {
+		ctx.fillText(name,cx+ACTIVE_WIDTH/2-ctx.measureText(name).width/2,cy+ACTIVE_HEIGHT/2+i*18);
+	});
+}
+
+function active_include(card,context,x,y) {
+	let cx = card.x;
+	let cy = card.y;
+
+	if(context.phase.name == "decision" && !card.card.used) {
+		cy -= 30;
+	}
+	if(context.playCards.includes(card)) {
+		cy-=10;
+	}
+	return (x >= cx && x <= cx + ACTIVE_WIDTH && y >= cy && y <= cy + ACTIVE_HEIGHT);
 }
