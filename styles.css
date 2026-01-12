@@ -1,0 +1,17 @@
+body {
+  margin: 0;
+  background: #111;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  color: white;
+}
+
+canvas { 
+  display: block; 
+}
+
+.box-boder {
+  border-color: #0f0;
+  border-style: solid;
+  border-width: 2px;
+}
