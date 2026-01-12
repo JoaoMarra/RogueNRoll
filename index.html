@@ -12,9 +12,10 @@
       <canvas id="game"></canvas>
       <div id="menu" class="box-boder" style="position: absolute; top:20px; left: 20px; right: 20px; bottom: 20px;display: none;">
         <button style="background: transparent;width: 40px;height: 40px;color: #0f0;border: none;font-size: 22px;" onclick="closeMenu()">X</button>
-        <canvas id="menu_canvas"></canvas>
+        <canvas id="menu_canvas">
+        </canvas>
       </div>
-      <canvas id="description_canvas" style="position:absolute; top:0; left:0; right: 0;bottom: 0;pointer-events: none;"></canvas>
+      <canvas id="description_canvas" style="position:absolute; top:0; left:0; right: 0;bottom: 0;"></canvas>
     </div>
     <textarea id="log" readonly class="box-boder" style="background:#000; color: #0f0; height: 100px;"></textarea>
   </div>
@@ -54,7 +55,7 @@
 
   const GAME_WIDTH = 800;
   const GAME_HEIGHT = 600;
-  const BUTTON_HEIGHT = 50
+  const BUTTON_HEIGHT = 40
 
   var VERTICAL = canvas.width < canvas.height;
   var BUTTON_H_SCALED = BUTTON_HEIGHT * canvas.height/GAME_HEIGHT;
@@ -97,31 +98,31 @@
 
   const BUTTONS = [
     { 
-      x:310,y:550,w:180,name:()=>"ROLAR",status:()=>GAME_CONTEXT.phase.name==="roll",
+      x:310,y:GAME_HEIGHT-BUTTON_HEIGHT,w:180,name:()=>"ROLAR",status:()=>GAME_CONTEXT.phase.name==="roll",
       color:'#2a2',
       effect:()=>{
         rollPlayer(GAME_CONTEXT)
       }
     },
     { 
-      x:310,y:550,w:180,name:()=>"ATACAR",status:()=>GAME_CONTEXT.phase.name==="decision",
+      x:310,y:GAME_HEIGHT-BUTTON_HEIGHT,w:180,name:()=>"ATACAR",status:()=>GAME_CONTEXT.phase.name==="decision",
       color:'#2a2',
       effect:()=>{
         resolveTurn(GAME_CONTEXT)
       }
     },
     { 
-      x:310,y:550,w:180,name:(context)=>`DEFENDER ${context.enemyRoll}`,status:()=>GAME_CONTEXT.phase.name==="enemy",
+      x:310,y:GAME_HEIGHT-BUTTON_HEIGHT,w:180,name:(context)=>`DEFENDER ${context.enemyRoll}`,status:()=>GAME_CONTEXT.phase.name==="enemy",
       color:'#c70a0a',
       effect:()=>{
         resolveEnemyTurn(GAME_CONTEXT)
       }
     },
     { 
-      x:GAME_WIDTH-180,y:GAME_HEIGHT-BUTTON_HEIGHT,w:180,name:(context)=>'MENU',status:()=>true,
+      x:GAME_WIDTH-190,y:GAME_HEIGHT-BUTTON_HEIGHT,w:180,name:(context)=>'MENU',status:()=>true,
       color:'#444',
       effect:()=>{
-        openMenu();
+        openMenu(GAME_CONTEXT);
       }
     }
   ]
@@ -302,7 +303,7 @@
   }
 
 /* ================== INPUT ================== */
-  canvas.addEventListener("click",e=>{
+  canvas.addEventListener("click",function(e) {
     const x=e.clientX,y=e.clientY;
 
     const scaleX = x * GAME_WIDTH/canvas.width;
@@ -327,20 +328,22 @@
         }
       }
     }
-
   });
 
   var descriptionTimeout;
-  canvas.addEventListener("mousemove",e=>{
+  const DESCRITION_CLEAR_TIME = 2000;
+  descriptionCanvas.addEventListener("mousemove",e=>{
     DESCRIPTION = null;
     const cx=e.clientX,cy=e.clientY;
 
-    let menuClick = menu_includes(GAME_CONTEXT,cx,cy);
-    if(menuClick) {
-      DESCRIPTION = menuClick;
-      if(descriptionTimeout != null)
-        clearTimeout(descriptionTimeout)
-      descriptionTimeout = setTimeout(clearDescription, 3000);
+    if(menuOpened) {
+      let menuClick = menu_includes(GAME_CONTEXT,cx,cy);
+      if(menuClick) {
+        DESCRIPTION = menuClick;
+        if(descriptionTimeout != null)
+          clearTimeout(descriptionTimeout)
+        descriptionTimeout = setTimeout(clearDescription, DESCRITION_CLEAR_TIME);
+      }
       return;
     }
 
@@ -353,7 +356,7 @@
         };
         if(descriptionTimeout != null)
           clearTimeout(descriptionTimeout)
-        descriptionTimeout = setTimeout(clearDescription, 3000);
+        descriptionTimeout = setTimeout(clearDescription, DESCRITION_CLEAR_TIME);
         return;
       }
     }
@@ -368,9 +371,37 @@
 
         if(descriptionTimeout != null)
           clearTimeout(descriptionTimeout)
-        descriptionTimeout = setTimeout(clearDescription, 3000);
+        descriptionTimeout = setTimeout(clearDescription, DESCRITION_CLEAR_TIME);
         return;
       }
+    }
+  });
+  descriptionCanvas.addEventListener("click", function(e) {
+    if(menuOpened) {
+      descriptionCanvas.style.pointerEvents = 'none';
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      descriptionCanvas.style.pointerEvents = 'auto';
+
+      el.dispatchEvent(new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        view: window
+      }));
+    } else {
+      canvas.dispatchEvent(new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        view: window
+      }));
+    }
+  });
+  descriptionCanvas.addEventListener('wheel', (e) => {
+    if(menuOpened) {
+      menu_scroll(GAME_CONTEXT, e);
     }
   });
 
@@ -433,7 +464,7 @@
 
     ctx.font="20px Arial";
     if(VERTICAL)
-      ctx.fillText(`Nível: ${GAME_CONTEXT.level}`,canvas.width-100,ly+12);
+      ctx.fillText(`Nível: ${GAME_CONTEXT.level}`,canvas.width-100,canvas.height-BUTTON_H_SCALED - 8);
     else
       ctx.fillText(`Nível: ${GAME_CONTEXT.level}`,lx+size*2+10,ly+12);
 
@@ -467,17 +498,41 @@
     if(DESCRIPTION != null) {
       descriptionCtx.clearRect(0,0,descriptionCanvas.width,descriptionCanvas.height);
       descriptionCtx.font="20px Arial";
-      const dsize = descriptionCtx.measureText(DESCRIPTION.label).width;
+      const dsize = descriptionCtx.measureText(DESCRIPTION.label).width+8;
+      let rwidth = Math.min(canvas.width-DESCRIPTION.x,dsize);
+      if(rwidth != dsize && rwidth < canvas.width/2) {
+        rwidth = canvas.width/2;
+        DESCRIPTION.x = canvas.width-rwidth;
+      }
+      const spaceSize = descriptionCtx.measureText(" ").width;
+      let rheight = 30;
+      if(rwidth < dsize) {
+        rheight = Math.ceil(dsize/rwidth)*30;
+      }
       descriptionCtx.fillStyle="#000";
 
-      descriptionCtx.fillRect(DESCRIPTION.x, DESCRIPTION.y, dsize+8, 30);
+      descriptionCtx.fillRect(DESCRIPTION.x, DESCRIPTION.y, rwidth, rheight);
       descriptionCtx.fillStyle="#fff";
-      descriptionCtx.fillText(DESCRIPTION.label,DESCRIPTION.x+4, DESCRIPTION.y+20);
+      const labels = DESCRIPTION.label.split(" ");
+      let x = DESCRIPTION.x+4;
+      let y = DESCRIPTION.y;
+      labels.forEach((label,i)=> {
+        if(x + descriptionCtx.measureText(label).width > canvas.width) {
+          x = DESCRIPTION.x+4;
+          y += 30;
+        }
+        descriptionCtx.fillText(label,x, y+20);
+        x += descriptionCtx.measureText(label).width+spaceSize;
+        if(x > canvas.width) {
+          x = DESCRIPTION.x+4;
+          y += 30;
+        }
+      });
     } else {
       descriptionCtx.clearRect(0,0,descriptionCanvas.width,descriptionCanvas.height);
     }
 
-    menu_draw(GAME_CONTEXT, delta);
+    // menu_draw(GAME_CONTEXT, delta);
 
   }
 
@@ -494,7 +549,7 @@
     const label=btn.name(GAME_CONTEXT);
     const labels = btn.name(GAME_CONTEXT).split(" ");
     labels.forEach((label,i)=> {
-      ctx.fillText(label,scaledX + scaledW/2 - ctx.measureText(label).width/2, scaledY + scaledH/2 + i*18);
+      ctx.fillText(label,scaledX + scaledW/2 - ctx.measureText(label).width/2, scaledY + scaledH/2 + i*18 + 8);
     });
   }
 

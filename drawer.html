@@ -52,7 +52,6 @@
       redrawCanvas();
     });
     output.addEventListener('change', () => {
-      console.log('change');
       let parts = output.value.split("\n");
       drawn = new Set(parts);
       redrawCanvas();

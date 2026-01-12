@@ -1,7 +1,6 @@
 const ENEMIES_SPRITES = new Image();
 ENEMIES_SPRITES.src = "sprites/enemies.png"
 ENEMIES_SPRITES.onload = function () {
-	// console.log("=GOT=")
 	START_GAME();
 };
 
