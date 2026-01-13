@@ -1,7 +1,11 @@
+var ENEMY_LOADED = false;
 const ENEMIES_SPRITES = new Image();
 ENEMIES_SPRITES.src = "sprites/enemies.png"
 ENEMIES_SPRITES.onload = function () {
-	START_GAME();
+	ENEMY_LOADED = true;
+	try {
+		playGame();
+	} catch(e) {}
 };
 
 const ENEMY_WIDTH = 60;
@@ -9,24 +13,64 @@ const ENEMY_HEIGHT = 80;
 
 const ENEMIES = [
 	{
-		name: "Dragão",
+		name: "Baú-monstro",
 		desc: "",
 		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,0)}
 	},
 	{
-		name: "Homem-Peixe",
+		name: "Devorador de mentes",
 		desc: "",
 		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,1)}
 	},
 	{
-		name: "Cavaleiro Púrpura",
+		name: "Dragão",
 		desc: "",
 		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,2)}
 	},
 	{
-		name: "Troll",
+		name: "Escorpião",
 		desc: "",
 		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,3)}
+	},
+	{
+		name: "Homem-Peixe",
+		desc: "",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,4)}
+	},
+	{
+		name: "Fogo-Fátuo",
+		desc: "",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,5)}
+	},
+	{
+		name: "Pantera Deslocadora",
+		desc: "",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,6)}
+	},
+	{
+		name: "Morcego",
+		desc: "",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,7)}
+	},
+	{
+		name: "Observador",
+		desc: "",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,8)}
+	},
+	{
+		name: "Cavaleiro Púrpura",
+		desc: "",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,9)}
+	},
+	{
+		name: "Meleca-Viva",
+		desc: "",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,10)}
+	},
+	{
+		name: "Troll",
+		desc: "",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,11)}
 	},
 ]
 

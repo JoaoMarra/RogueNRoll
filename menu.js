@@ -17,7 +17,7 @@ function openMenu(context) {
 			sizeDefined = true;
 		}
 		menuOpened = true;
-		menuOffset = 0;
+		offsetY = 0;
 		menu_draw(context,0);
 	}
 }

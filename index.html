@@ -7,17 +7,25 @@
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <div style="display: flex; flex-direction:column;">
-    <div style="position: relative;">
-      <canvas id="game"></canvas>
-      <div id="menu" class="box-boder" style="position: absolute; top:20px; left: 20px; right: 20px; bottom: 20px;display: none;">
-        <button style="background: transparent;width: 40px;height: 40px;color: #0f0;border: none;font-size: 22px;" onclick="closeMenu()">X</button>
-        <canvas id="menu_canvas">
-        </canvas>
+  <div style="position: relative;">
+    <div style="display: flex; flex-direction:column;">
+      <div style="position: relative;">
+        <canvas id="game"></canvas>
+        <div id="menu" class="box-boder" style="position: absolute; top:20px; left: 20px; right: 20px; bottom: 20px;display: none;">
+          <button style="background: transparent;width: 40px;height: 40px;color: #0f0;border: none;font-size: 22px;" onclick="closeMenu()">X</button>
+          <canvas id="menu_canvas">
+          </canvas>
+        </div>
+        <canvas id="description_canvas" style="position:absolute; top:0; left:0; right: 0;bottom: 0;"></canvas>
       </div>
-      <canvas id="description_canvas" style="position:absolute; top:0; left:0; right: 0;bottom: 0;"></canvas>
+      <textarea id="log" readonly class="box-boder" style="background:#000; color: #0f0; height: 100px;"></textarea>
     </div>
-    <textarea id="log" readonly class="box-boder" style="background:#000; color: #0f0; height: 100px;"></textarea>
+    <div id="char_select" class="box-boder" style="position: absolute; top:20px; left: 20px; right: 20px; bottom: 20px;display: flex; flex-direction: column;">
+      <h1 style="margin-left: 10px;">Selecione até 3 personagens</h1>
+      <div id="char_select_inner" style="overflow: scroll;">
+      </div>
+      <div class="common-button" style="margin-top:auto;width: calc(100% - 20px);margin-left: 10px;margin-bottom: 10px;" onclick="confirmCharacters()">Confirmar</div>
+    </div>
   </div>
 </body>
 <script>
@@ -40,10 +48,12 @@
 </script>
 <script type="text/javascript" src="dice.js"></script>
 <script type="text/javascript" src="enemy.js"></script>
+<script type="text/javascript" src="characters.js"></script>
 <script type="text/javascript" src="active_cards.js"></script>
 <script type="text/javascript" src="passive_cards.js"></script>
 <script type="text/javascript" src="game_context.js"></script>
 <script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript" src="char_select.js"></script>
 <script>
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
@@ -52,6 +62,8 @@
   menu.style.backgroundColor = BACKGROUND_COLOR;
   const descriptionCanvas = document.getElementById("description_canvas");
   const descriptionCtx = descriptionCanvas.getContext("2d");
+  const charSelect = document.getElementById("char_select");
+  charSelect.style.backgroundColor = BACKGROUND_COLOR;
 
   const GAME_WIDTH = 800;
   const GAME_HEIGHT = 600;
@@ -163,8 +175,8 @@
   }
 
   function START_GAME() {
-    for(let i=0; i < 100; i++)
-      newPassiveCard(GAME_CONTEXT)
+    // for(let i=0; i < 100; i++)
+    newPassiveCard(GAME_CONTEXT)
     startRound();
     requestAnimationFrame(loop);
   }
@@ -382,13 +394,17 @@
       const el = document.elementFromPoint(e.clientX, e.clientY);
       descriptionCanvas.style.pointerEvents = 'auto';
 
-      el.dispatchEvent(new MouseEvent('click', {
-        bubbles: true,
-        cancelable: true,
-        clientX: e.clientX,
-        clientY: e.clientY,
-        view: window
-      }));
+      if(el == canvas) {
+        closeMenu();
+      } else {
+        el.dispatchEvent(new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          clientX: e.clientX,
+          clientY: e.clientY,
+          view: window
+        }));
+      }
     } else {
       canvas.dispatchEvent(new MouseEvent('click', {
         bubbles: true,
@@ -569,5 +585,21 @@
     if(GAME_CONTEXT.phase != null || GAME_CONTEXT.phase.name!=="gameover") {
       requestAnimationFrame(loop);
     }
+  }
+</script>
+<script>
+  function playGame() {
+    if(!ENEMY_LOADED || !CHARACTERS_LOADED) {
+      return;
+    }
+  }
+
+  if(ENEMY_LOADED && CHARACTERS_LOADED) {
+    playGame();
+  }
+
+  function confirmCharacters() {
+    charSelect.style.display = 'none';
+    START_GAME();
   }
 </script>
