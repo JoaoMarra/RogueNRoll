@@ -2,6 +2,8 @@ function closeMenu() {
 	if(menu) {
 		menu.style.display = 'none';
 		menuOpened = false;
+
+		descriptionCanvas.height = window.innerHeight-logArea.clientHeight;
 	}
 }
 
@@ -25,6 +27,8 @@ function openMenu(context) {
 		menuOpened = true;
 		offsetY = 0;
 		menu_draw(context,0);
+
+		descriptionCanvas.height = WINDOW_HEIGHT;
 	}
 }
 
@@ -41,8 +45,8 @@ const passiveH = 50;
 
 let offsetY = 0;
 let maxOffsetY;
-function menu_scroll(context, e) {
-	offsetY += e.deltaY;
+function menu_scroll(context, x,y) {
+	offsetY += y;
 	if(offsetY < 0){
 		offsetY = 0;
 	} else if(offsetY > maxOffsetY) {

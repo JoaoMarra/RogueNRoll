@@ -1,5 +1,5 @@
 
-const ACTIVE_WIDTH = 100;
+const ACTIVE_WIDTH = 60;
 const ACTIVE_HEIGHT = 80;
 
 const AC_CARDS = [

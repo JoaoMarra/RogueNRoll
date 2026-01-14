@@ -3,6 +3,7 @@ const GAME_CONTEXT = {
     levelSum : 0,
     shield : 1,
     maxShield: 0,
+    extraShield: 0,
     rollValue: null,
     calcValue: null,
     previewValue: null,
@@ -32,6 +33,8 @@ function context_resetTurn(context) {
     context.playCards = []
     context.turnKill = 0;
     context.turnCritic = 0;
+    context.extraShield = 0;
+    context.shield = Math.min(context.shield, context.maxShield);
     context.phase=GAME_PHASES[0];
 }
 
@@ -85,7 +88,7 @@ function context_addEnemyRoll(context, value) {
 
 function context_addShield(context, value) {
     context.shield += value;
-    context.shield = Math.min(context.shield,context.maxShield);
+    context.shield = Math.min(context.shield,context.maxShield+context.extraShield);
     return context.shield;
 }
 

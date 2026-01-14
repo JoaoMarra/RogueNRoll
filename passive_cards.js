@@ -100,7 +100,9 @@ const PC_CARDS = [
 	{ 
 		name:"Compra carta", time:END_TURN_TIME, description: "compra uma carta aleatória ao final de cada turno", 
 		effect:(ctx,amount) => {
-			return context_renewCards(ctx,amount,false);
+			let log = context_renewCards(ctx,3+amount,false);
+			positionActiveCards(ctx);
+			return log;
 		} 
 	},
 	{ 
@@ -129,7 +131,7 @@ const PC_CARDS = [
 		} 
 	},
 	{ 
-		name:"Escudo +Carta", time:END_TURN_TIME, description: "+1 de escudo para cada carta ativa utilizada", 
+		name:"Escudo +Carta", time:END_ATTACK, description: "+1 de escudo para cada carta ativa utilizada", 
 		effect:(ctx,amount) => {
 			const before = ctx.shield;
 			if(ctx.playCards.length == 0)
@@ -138,6 +140,15 @@ const PC_CARDS = [
 			return `escudo ${before} - ${after}`;
 		} 
 	},
+	{
+		name:"Escudo Extra", time:ROLL_TIME, description: "escudo pode ultrapassar o máximo em +1", 
+		effect:(ctx,amount) => {
+			const before = ctx.extraShield;
+			ctx.extraShield += amount;
+			const after = before+ctx.extraShield;
+			return `escudo extra ${before} - ${after}`;
+		} 
+	}
 ]
 
 function newPassiveCard(context,passives=null) {
@@ -160,14 +171,12 @@ function newPassiveCard(context,passives=null) {
 }
 
 function passive_apply(context, gameTime) {
-	const passives = Object.values(context.passiveCards);
+	const passives = Object.values(context.passiveCards).filter((p)=>p.time == gameTime);
 
 	var log = "";
 	passives.forEach(p=>{
-		if(p.time == gameTime) {
-			let effect = p.effect(context,p.amount);
-			log += `Passiva ${p.name} ${p.amount}x: ${effect}\n`;
-		}
+		let effect = p.effect(context,p.amount);
+		log += `Passiva ${p.name} ${p.amount}x: ${effect}\n`;
 	});
 	
 	context.previewValue = previewTurn(context).calcValue;
@@ -175,7 +184,7 @@ function passive_apply(context, gameTime) {
 }
 
 function innate_apply(context, gameTime) {
-	const passives = context.innate;
+	const passives = context.innate.filter((p)=>p.time == gameTime);
 
 	var log = "";
 	passives.forEach(p=>{

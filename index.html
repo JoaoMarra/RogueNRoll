@@ -39,9 +39,10 @@
   const TICK_TIME = FPS/1000.0;
 
   const ROLL_TIME = 0
-  const ENEMY_TIME = 1
-  const END_TURN_TIME = 2
-  const END_ROUND_TIME = 3
+  const END_ATTACK = 1
+  const ENEMY_TIME = 2
+  const END_TURN_TIME = 3
+  const END_ROUND_TIME = 4
 
   const BACKGROUND_COLOR = '#222'
 
@@ -88,12 +89,14 @@
 
   var VERTICAL = canvas.width < canvas.height;
   var BUTTON_H_SCALED = BUTTON_HEIGHT * canvas.height/GAME_HEIGHT;
+  var WINDOW_HEIGHT;
 
   function resize() {
+    WINDOW_HEIGHT = window.innerHeight;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight-logArea.clientHeight;
     descriptionCanvas.width = window.innerWidth;
-    descriptionCanvas.height = window.innerHeight;
+    descriptionCanvas.height = window.innerHeight-logArea.clientHeight;
     VERTICAL = canvas.width < canvas.height;
     BUTTON_H_SCALED = BUTTON_HEIGHT * canvas.height/GAME_HEIGHT;
   }
@@ -235,7 +238,6 @@
 
 /* ================== GAME LOGIC ================== */
   function rollPlayer(context) {
-    // context_resetTurn(context);
     let value = context_rollDice(context);
 
     log(`Jogador rolou: ${value}`);
@@ -254,7 +256,6 @@
       context.passedTurn = false;
       logs = context_applyCards(context, true);
       logs.split("\n").forEach(l=>log(l));
-      context.playCards = [];
     } else {
       context.passedTurn = true;
     }
@@ -285,16 +286,16 @@
 
     context.enemies = context.enemies.filter(e=>e.hp>0);
 
-    logs = passive_apply(context, END_TURN_TIME);
+    logs = passive_apply(context, END_ATTACK);
     logs.split("\n").forEach(l=>log(l));
-    logs = innate_apply(context, END_TURN_TIME);
+    logs = innate_apply(context, END_ATTACK);
     logs.split("\n").forEach(l=>log(l));
 
     if(killed) {
+      endTurn(context);
       if(context.enemies.length===0) {
         nextLevel(context);
       } else {
-        context_resetTurn(context);
         positionsEnemies(context);
       }
     } else {
@@ -348,8 +349,16 @@
         log(`Nova carta ativa: ${cards}`);
         positionActiveCards(context);
       }
-      context_resetTurn(context);
+      endTurn(context);
     }
+  }
+
+  function endTurn(context) {
+    logs = passive_apply(context, END_TURN_TIME);
+    logs.split("\n").forEach(l=>log(l));
+    logs = innate_apply(context, END_TURN_TIME);
+    logs.split("\n").forEach(l=>log(l));
+    context_resetTurn(context);
   }
 
 /* ================== INPUT ================== */
@@ -457,9 +466,22 @@
       }));
     }
   });
-  descriptionCanvas.addEventListener('wheel', (e) => {
+  var touchStartX =0;
+  var touchStartY =0;
+  descriptionCanvas.addEventListener('touchstart', (e) => {
     if(menuOpened) {
-      menu_scroll(GAME_CONTEXT, e);
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+  });
+  descriptionCanvas.addEventListener('touchmove', (e) => {
+    // e.preventDefault();
+    if(menuOpened) {
+      const touchX = e.touches[0].clientX;
+      const touchY = e.touches[0].clientY;
+      menu_scroll(GAME_CONTEXT, touchStartX-touchX,touchStartY-touchY);
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
     }
   });
 
@@ -520,7 +542,13 @@
     ctx.fillText(shieldLabel,lx-shieldW,ly+10);
     ctx.font="15px Arial";
     shieldLabel=`/${GAME_CONTEXT.maxShield}`;
+    shieldW = ctx.measureText(shieldLabel).width;
     ctx.fillText(shieldLabel,lx,ly+10);
+    if(GAME_CONTEXT.extraShield > 0) {
+      shieldLabel=`+${GAME_CONTEXT.extraShield}`;
+      ctx.fillStyle="#99e5e8";
+      ctx.fillText(shieldLabel,lx+shieldW,ly+10);
+    }
     ctx.font="12px Arial";
     ctx.fillStyle="#fff";
     shieldLabel="escudo";

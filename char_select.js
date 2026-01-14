@@ -22,15 +22,15 @@ function characterTemplate(char,id) {
         <div style="display: flex;align-items: top;">
             <img style="width:56px;height:56px;" src="sprites/${char.sprite}">
             <div>
-                <strong>${char.name}</strong><br>
-                <i>${char.description}<br>${char.can}</i>
+                <div style="font-size:18px;"><strong>${char.name}</strong></div>
+                <div style="font-size:12px;"><i>${char.description}<br>${char.can}</i></div>
             </div>
         </div>
-        <div style="display: flex; align-items: center;">
-    <img src="sprites/shield.png" style="margin-right: 5px;">${char.shield}
-    <img src="sprites/dado.png" style="margin-right: 5px;margin-left:10px;">[ ${char.dice} ]
-    <img src="sprites/innate.png" style="margin-right: 5px;margin-left:10px;">${PC_CARDS[char.innate].name}
+        <div style="display: flex; align-items: center;justify-content:space-around;margin-top:.5rem;">
+    <div style="display:flex;align-items:center;"><img src="sprites/shield.png" style="margin-right:.2rem;">${char.shield}</div>
+    <div style="display:flex;align-items:center;"><img src="sprites/dado.png" style="margin-right:.2rem;">[ ${char.dice} ]</div>
         </div>
+    <div style="display:flex;align-items:center;margin-top:.5rem;"><img src="sprites/innate.png" style="margin-right:.5rem;">${PC_CARDS[char.innate].name}</div>
     <div>
     </div>
 </div>`;
@@ -59,4 +59,4 @@ function fastStart() {
         confirmCharacters()
     },100);
 }
-fastStart();
+// fastStart();
