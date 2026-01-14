@@ -23,16 +23,15 @@ function characterTemplate(char,id) {
             <img src="sprites/${char.sprite}">
             <div>
                 <strong>${char.name}</strong><br>
-                <i>${char.description}</i>
+                <i>${char.description}<br>${char.can}</i>
             </div>
         </div>
         <div style="display: flex; align-items: center;">
     <img src="sprites/shield.png" style="margin-right: 5px;">${char.shield}
     <img src="sprites/dado.png" style="margin-right: 5px;margin-left:10px;">[ ${char.dice} ]
-    <img src="sprites/innate.png" style="margin-right: 5px;margin-left:10px;">${char.innate}
+    <img src="sprites/innate.png" style="margin-right: 5px;margin-left:10px;">${PC_CARDS[char.innate].name}
         </div>
     <div>
-    ${char.can}
     </div>
     </div>`;
 }

@@ -70,11 +70,16 @@ const AC_CARDS = [
 ]
 
 function newActiveCard(context) {
-	const c = AC_CARDS[rand(0,AC_CARDS.length-1)];
+	if(context.possibleActive.length == 0)
+		return null;
+	let random = rand(0,context.possibleActive.length-1);
+	const c = AC_CARDS[context.possibleActive[random]];
 	return { ...c, used:false };
 }
 
 function refreshActiveCards(context,amount) {
+	if(context.possibleActive.length == 0)
+		return "Nenhuma carta disponível";
 	let log = "";
 	let index;
 	for(let i = 0; i < amount; i++) {
@@ -121,10 +126,10 @@ function active_include(card,context,x,y) {
 	let cx = card.x;
 	let cy = card.y;
 
-	if(context.phase.name == "decision" && !card.card.used) {
+	if(context.phase.name == "decision" && !context.activeCards[card.index].used) {
 		cy -= 30;
 	}
-	if(context.playCards.includes(card)) {
+	if(context.playCards.includes(context.activeCards[card.index])) {
 		cy-=10;
 	}
 	return (x >= cx && x <= cx + ACTIVE_WIDTH && y >= cy && y <= cy + ACTIVE_HEIGHT);

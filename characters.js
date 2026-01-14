@@ -14,23 +14,23 @@ const CHARACTERS = [
 		description: "Ele luta pela justiça e a ordem como ninguém",
 		shield: 4,
 		dice: [1,3,5],
-		innate: ["escudo +1"],
-		passives: ["barreira +1","Par +1", "Par -1"],
+		innate: 7,//"escudo +1",
+		passives: [6,2,4],//["barreira +1","Par +1", "Par -1"],
 		actives: [],
 		sprite:"c_paladino.png",
-		draw:(x,y)=>{drawSprite(x,y,CHARACTERS_SPRITES,4)},
-		can: "Se depende bem, não gosta de números pares"
+		draw:(x,y,ctx)=>{drawSprite(x,y,CHARACTERS_SPRITES,4,ctx)},
+		can: "Se defende bem, não gosta de números pares"
 	},
 	{
 		name: "Mago Mediano",
 		description: "Nem o pior nem o melhor",
 		shield: 2,
 		dice: [3,4],
-		innate: [],
-		passives: ["sempre +1","sempre -1","escudo +1","rouba alma"],
-		actives: ["+2","-2"],
+		innate: 12,//"contra ataque",
+		passives: [0,1,7,8],//["sempre +1","sempre -1","escudo +1","rouba alma"],
+		actives: [1,3],//["+2","-2"],
 		sprite:"c_mago.png",
-		draw:(x,y)=>{drawSprite(x,y,CHARACTERS_SPRITES,3)},
+		draw:(x,y,ctx)=>{drawSprite(x,y,CHARACTERS_SPRITES,3,ctx)},
 		can: "Tenta sempre adequar o ataque, e pode se curar quando acerta os oponentes"
 	},
 	{
@@ -38,11 +38,11 @@ const CHARACTERS = [
 		description: "Ele não sabe como faz, mas acerta o alvo",
 		shield: 2,
 		dice: [2,4,6],
-		innate: ["alvo +escudo"],
-		passives: ["escudo +1","level +1"],
-		actives: ["set 3","set 1","set 6","+1","-1"],
+		innate: 13,//"escudo +critico",
+		passives: [7,9],//["escudo +1","level +1"],
+		actives: [4,5,6,0,2],//["set 3","set 1","set 6","+1","-1"],
 		sprite:"c_atirador.png",
-		draw:(x,y)=>{drawSprite(x,y,CHARACTERS_SPRITES,0)},
+		draw:(x,y,ctx)=>{drawSprite(x,y,CHARACTERS_SPRITES,0,ctx)},
 		can: "Tenta ser certeiro, tenta se defender e tenta ficar mais forte o mais rápido possível"
 	},
 	{
@@ -50,11 +50,11 @@ const CHARACTERS = [
 		description: "Consegue ganhar no azar",
 		shield: 3,
 		dice: [1],
-		innate: ["shield +carta"],
-		passives: ["impar +1","impar -1","sempre +1","sempre -1","apostar","compra carta"],
-		actives: ["rouba vida","set 6","set 3"],
+		innate: 14,//"escudo +carta",
+		passives: [3,5,0,1,10,11],//["impar +1","impar -1","sempre +1","sempre -1","apostar","compra carta"],
+		actives: [7,6,4],//["rouba vida","set 6","set 3"],
 		sprite:"c_jogador.png",
-		draw:(x,y)=>{drawSprite(x,y,CHARACTERS_SPRITES,2)},
+		draw:(x,y,ctx)=>{drawSprite(x,y,CHARACTERS_SPRITES,2,ctx)},
 		can: "Apesar do azar, pode mudar seu destino facilmente"
 	},
 	{
@@ -62,11 +62,11 @@ const CHARACTERS = [
 		description: "Ele vai deitar o inferno na porrada",
 		shield: 3,
 		dice: [4,5,6],
-		innate: ["barreira +1"],
-		passives: ["set 6","Sempre +1","Par +1","impar +1","level +1","rouba alma","escudo +1"],
-		actives: ["rouba vida","+2","+1"],
+		innate: 6,//"barreira +1",
+		passives: [0,2,3,9,8,7],//["Sempre +1","Par +1","impar +1","level +1","rouba alma","escudo +1"],
+		actives: [6,7,1,0],//["set 6","rouba vida","+2","+1"],
 		sprite:"c_bispo.png",
-		draw:(x,y)=>{drawSprite(x,y,CHARACTERS_SPRITES,1)},
+		draw:(x,y,ctx)=>{drawSprite(x,y,CHARACTERS_SPRITES,1,ctx)},
 		can: "Não liga para apanhar, está sempre se defendendo e se cura quando pode"
 	}
 ]

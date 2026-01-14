@@ -13,6 +13,9 @@
         <canvas id="game"></canvas>
         <div id="menu" class="box-boder" style="position: absolute; top:20px; left: 20px; right: 20px; bottom: 20px;display: none;">
           <button style="background: transparent;width: 40px;height: 40px;color: #0f0;border: none;font-size: 22px;" onclick="closeMenu()">X</button>
+          <div id="menu_char_div" style="margin-bottom: 1rem;">
+          </div>
+          <div style="margin-left:1rem;color: #0f0;font-weight:bold;font-size: 22sp;">Passivas</div>
           <canvas id="menu_canvas">
           </canvas>
         </div>
@@ -42,9 +45,14 @@
 
   const BACKGROUND_COLOR = '#222'
 
-  const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+  const rand = (a,b)=>{
+    if(a==b)
+      return a;
+    else
+      return a+Math.floor(Math.random()*(b-a+1));
+  };
 
-  const drawSprite = (x,y,sheet,i)=>{const size = sheet.height; ctx.drawImage(sheet,i*size,0,size,size,x,y,size,size)}
+  const drawSprite = (x,y,sheet,i,dCtx=ctx)=>{const size = sheet.height; dCtx.drawImage(sheet,i*size,0,size,size,x,y,size,size)}
 </script>
 <script type="text/javascript" src="dice.js"></script>
 <script type="text/javascript" src="enemy.js"></script>
@@ -67,7 +75,7 @@
 
   const GAME_WIDTH = 800;
   const GAME_HEIGHT = 600;
-  const BUTTON_HEIGHT = 40
+  const BUTTON_HEIGHT = 50
 
   var VERTICAL = canvas.width < canvas.height;
   var BUTTON_H_SCALED = BUTTON_HEIGHT * canvas.height/GAME_HEIGHT;
@@ -157,7 +165,7 @@
 
   function spawnEnemies(context) {
     context.enemies=[];
-    let amount = rand(context.level,3+context.level)
+    let amount = rand(context.level,4+context.level)
     for(let i=0;i<amount;i++)
       context.enemies.push(newEnemy());
     log("Inimigos gerados:", context.enemies.length);
@@ -165,18 +173,18 @@
 
 /* ================== FLOW ================== */
   function startRound() {
-    log("=== INÍCIO DA RODADA | Nível " + GAME_CONTEXT.level + " ===");
+    log("=== INÍCIO DA RODADA | Fase " + GAME_CONTEXT.level + " ===");
     spawnEnemies(GAME_CONTEXT);
     positionsEnemies(GAME_CONTEXT);
     const cards = context_renewCards(GAME_CONTEXT,3);
-    cards.forEach(c=>log(`Nova carta ativa: ${c.name}`));
+    log(`Nova carta ativa: ${cards}`);
     positionActiveCards(GAME_CONTEXT);
     context_resetTurn(GAME_CONTEXT);
   }
 
   function START_GAME() {
     // for(let i=0; i < 100; i++)
-    newPassiveCard(GAME_CONTEXT)
+    //   newPassiveCard(GAME_CONTEXT,GAME_CONTEXT.characters[0].passives);
     startRound();
     requestAnimationFrame(loop);
   }
@@ -211,19 +219,21 @@
       ACTIVE_POS.push({
         'x':cx,
         'y':cy,
-        'card':c
+        'index':i
       });
     });
   }
 
 /* ================== GAME LOGIC ================== */
   function rollPlayer(context) {
-    context_resetTurn(context);
+    // context_resetTurn(context);
     let value = context_rollDice(context);
 
     log(`Jogador rolou: ${value}`);
 
     value = passive_apply(context, ROLL_TIME);
+    value.split("\n").forEach(l=>log(l));
+    value = innate_apply(context, ROLL_TIME);
     value.split("\n").forEach(l=>log(l));
 
     context.phase=GAME_PHASES[1];
@@ -248,8 +258,13 @@
       if(enemy_die(e,diceValue)) {
         e.hp=0;
         killed=true;
-        log("Inimigo derrotado:", `${e.min}-${e.max}`);
         context.turnKill += 1;
+        if(diceValue == e.min || diceValue == e.max) {
+          context.turnCritic += 1;
+          log(`Inimigo derrotado: ${e.min}-${e.max}, ataque CRÍTICO!`); 
+        } else {
+          log(`Inimigo derrotado: ${e.min}-${e.max}`); 
+        }
       }
     });
 
@@ -262,6 +277,8 @@
     context.enemies = context.enemies.filter(e=>e.hp>0);
 
     logs = passive_apply(context, END_TURN_TIME);
+    logs.split("\n").forEach(l=>log(l));
+    logs = innate_apply(context, END_TURN_TIME);
     logs.split("\n").forEach(l=>log(l));
 
     if(killed) {
@@ -279,20 +296,32 @@
   function nextLevel(context) {
     logs = passive_apply(context, END_ROUND_TIME);
     logs.split("\n").forEach(l=>log(l));
+    logs = innate_apply(context, END_ROUND_TIME);
+    logs.split("\n").forEach(l=>log(l));
 
-    const level = context_addLevel(context,1);
-    log("Subiu de nível:", level);
-    const card = newPassiveCard(context);
-    log(`Nova passiva: ${card.name}`);
+    const char = context.characters[rand(0,context.characters.length-1)];
+    for(let i=0; i < context.levelToUp;i++) {
+      const charLevel = context_levelCharacter(context, char);
+      log(`Subiu de nível: ${charLevel}`);
+      const card = newPassiveCard(context,char.passives);
+      log(`Nova passiva: ${card.name}`);
+    }
+    
+    context_addLevel(context);
     startRound();
   }
 
   function enemyAttack(context) {
     context.phase = GAME_PHASES[2]
 
-    context.enemyRoll = rand(Math.ceil(context.enemies.length/2),context.enemies.length)*Math.ceil(context.level/2);
+    const minDamage = context.level;
+    const maxDamage = context.enemies.length * context.level;
+
+    context.enemyRoll = rand(minDamage, maxDamage);
 
     logs = passive_apply(context, ENEMY_TIME);
+    logs.split("\n").forEach(l=>log(l));
+    logs = innate_apply(context, ENEMY_TIME);
     logs.split("\n").forEach(l=>log(l));
   }
 
@@ -307,7 +336,7 @@
     } else {
       if(context.passedTurn) {
         const cards = context_renewCards(context,3);
-        cards.forEach(c=>log(`Nova carta ativa: ${c.name}`));
+        log(`Nova carta ativa: ${cards}`);
         positionActiveCards(context);
       }
       context_resetTurn(context);
@@ -334,8 +363,9 @@
 
     if(GAME_CONTEXT.phase.name === "decision") {
       for(const c of ACTIVE_POS) {
-        if(!c.card.used && active_include(c,GAME_CONTEXT,x,y)) {
-          context_playCard(GAME_CONTEXT, c.card);
+        const card = GAME_CONTEXT.activeCards[c.index];
+        if(!card.used && active_include(c,GAME_CONTEXT,x,y)) {
+          context_playCard(GAME_CONTEXT, card);
           break;
         }
       }
@@ -378,7 +408,7 @@
         DESCRIPTION = {
           'x':cx,
           'y':cy,
-          'label':c.card.description
+          'label':GAME_CONTEXT.activeCards[c.index].description
         };
 
         if(descriptionTimeout != null)
@@ -439,7 +469,8 @@
 
   // Active cards
     ACTIVE_POS.forEach(c=>{
-      active_draw(ctx,c.x,c.y,c.card,GAME_CONTEXT);
+      const card = GAME_CONTEXT.activeCards[c.index];
+      active_draw(ctx,c.x,c.y,card,GAME_CONTEXT);
     });
 
   // ROLLs
@@ -469,20 +500,25 @@
     ctx.beginPath();
     ctx.arc(lx, ly+size/2, size, 0, 2 * Math.PI);
     ctx.fill();
+
     ctx.font="30px Arial";
     ctx.fillStyle="#fff";
     let shieldLabel=GAME_CONTEXT.shield;
-    ctx.fillText(shieldLabel,lx-ctx.measureText(shieldLabel).width/2,ly+10);
+    let shieldW = ctx.measureText(shieldLabel).width;
+    ctx.fillText(shieldLabel,lx-shieldW,ly+10);
     ctx.font="15px Arial";
+    shieldLabel=`/${GAME_CONTEXT.maxShield}`;
+    ctx.fillText(shieldLabel,lx,ly+10);
+    ctx.font="12px Arial";
     ctx.fillStyle="#fff";
     shieldLabel="escudo";
     ctx.fillText(shieldLabel,lx-ctx.measureText(shieldLabel).width/2,ly+30);
 
     ctx.font="20px Arial";
     if(VERTICAL)
-      ctx.fillText(`Nível: ${GAME_CONTEXT.level}`,canvas.width-100,canvas.height-BUTTON_H_SCALED - 8);
+      ctx.fillText(`Fase ${GAME_CONTEXT.level}`,canvas.width-100,canvas.height-BUTTON_H_SCALED - 8);
     else
-      ctx.fillText(`Nível: ${GAME_CONTEXT.level}`,lx+size*2+10,ly+12);
+      ctx.fillText(`Fase ${GAME_CONTEXT.level}`,lx+size*2+10,ly+12);
 
   // Phase label
     ctx.font="22px Arial";
@@ -599,7 +635,10 @@
   }
 
   function confirmCharacters() {
-    charSelect.style.display = 'none';
-    START_GAME();
+    if(Object.values(SELECTED_CHARS).length > 0) {
+      context_setCharacters(GAME_CONTEXT,Object.values(SELECTED_CHARS));
+      charSelect.style.display = 'none';
+      START_GAME(); 
+    }
   }
 </script>
