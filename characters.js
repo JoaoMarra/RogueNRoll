@@ -18,7 +18,7 @@ const CHARACTERS = [
 		passives: [6,2,4],//["barreira +1","Par +1", "Par -1"],
 		actives: [],
 		sprite:"c_paladino.png",
-		draw:(x,y,ctx)=>{drawSprite(x,y,CHARACTERS_SPRITES,4,ctx)},
+		draw:(x,y,ctx,cutW,cutH)=>{drawSprite(x,y,CHARACTERS_SPRITES,4,ctx,cutW,cutH)},
 		can: "Se defende bem, não gosta de números pares"
 	},
 	{
@@ -30,7 +30,7 @@ const CHARACTERS = [
 		passives: [0,1,7,8],//["sempre +1","sempre -1","escudo +1","rouba alma"],
 		actives: [1,3],//["+2","-2"],
 		sprite:"c_mago.png",
-		draw:(x,y,ctx)=>{drawSprite(x,y,CHARACTERS_SPRITES,3,ctx)},
+		draw:(x,y,ctx,cutW,cutH)=>{drawSprite(x,y,CHARACTERS_SPRITES,3,ctx,cutW,cutH)},
 		can: "Tenta sempre adequar o ataque, e pode se curar quando acerta os oponentes"
 	},
 	{
@@ -42,7 +42,7 @@ const CHARACTERS = [
 		passives: [7,9],//["escudo +1","level +1"],
 		actives: [4,5,6,0,2],//["set 3","set 1","set 6","+1","-1"],
 		sprite:"c_atirador.png",
-		draw:(x,y,ctx)=>{drawSprite(x,y,CHARACTERS_SPRITES,0,ctx)},
+		draw:(x,y,ctx,cutW,cutH)=>{drawSprite(x,y,CHARACTERS_SPRITES,0,ctx,cutW,cutH)},
 		can: "Tenta ser certeiro, tenta se defender e tenta ficar mais forte o mais rápido possível"
 	},
 	{
@@ -54,7 +54,7 @@ const CHARACTERS = [
 		passives: [3,5,0,1,10,11],//["impar +1","impar -1","sempre +1","sempre -1","apostar","compra carta"],
 		actives: [7,6,4],//["rouba vida","set 6","set 3"],
 		sprite:"c_jogador.png",
-		draw:(x,y,ctx)=>{drawSprite(x,y,CHARACTERS_SPRITES,2,ctx)},
+		draw:(x,y,ctx,cutW,cutH)=>{drawSprite(x,y,CHARACTERS_SPRITES,2,ctx,cutW,cutH)},
 		can: "Apesar do azar, pode mudar seu destino facilmente"
 	},
 	{
@@ -66,7 +66,7 @@ const CHARACTERS = [
 		passives: [0,2,3,9,8,7],//["Sempre +1","Par +1","impar +1","level +1","rouba alma","escudo +1"],
 		actives: [6,7,1,0],//["set 6","rouba vida","+2","+1"],
 		sprite:"c_bispo.png",
-		draw:(x,y,ctx)=>{drawSprite(x,y,CHARACTERS_SPRITES,1,ctx)},
+		draw:(x,y,ctx,cutW,cutH)=>{drawSprite(x,y,CHARACTERS_SPRITES,1,ctx,cutW,cutH)},
 		can: "Não liga para apanhar, está sempre se defendendo e se cura quando pode"
 	}
 ]

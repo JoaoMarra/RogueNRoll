@@ -26,3 +26,12 @@ canvas {
   background: #444;
   text-align: center;
 }
+
+.character-card {
+  align-text:center;
+  padding:1rem;
+  margin-bottom:.2rem;
+  flex-basis: calc(50% - 0.5rem);
+  flex-grow:1;
+  box-sizing: border-box;
+}

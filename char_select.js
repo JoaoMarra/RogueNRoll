@@ -20,7 +20,7 @@ for(const c of CHARACTERS) {
 function characterTemplate(char,id) {
     return `<div id="${id}" class="box-boder" style="margin-left:10px;margin-right: 10px;padding: 10px">
         <div style="display: flex;align-items: top;">
-            <img src="sprites/${char.sprite}">
+            <img style="width:56px;height:56px;" src="sprites/${char.sprite}">
             <div>
                 <strong>${char.name}</strong><br>
                 <i>${char.description}<br>${char.can}</i>
@@ -33,7 +33,7 @@ function characterTemplate(char,id) {
         </div>
     <div>
     </div>
-    </div>`;
+</div>`;
 }
 
 function charClick(e) {
@@ -50,3 +50,13 @@ function charClick(e) {
         }
     }
 }
+
+function fastStart() {
+    for(let v=0; v < 3; v++) {
+        SELECTED_CHARS[CHARACTERS[v].name] = CHARACTERS[v];
+    }
+    setTimeout(()=>{
+        confirmCharacters()
+    },100);
+}
+fastStart();

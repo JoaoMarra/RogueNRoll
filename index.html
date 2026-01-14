@@ -11,18 +11,18 @@
     <div style="display: flex; flex-direction:column;">
       <div style="position: relative;">
         <canvas id="game"></canvas>
-        <div id="menu" class="box-boder" style="position: absolute; top:20px; left: 20px; right: 20px; bottom: 20px;display: none;">
-          <button style="background: transparent;width: 40px;height: 40px;color: #0f0;border: none;font-size: 22px;" onclick="closeMenu()">X</button>
-          <div id="menu_char_div" style="margin-bottom: 1rem;">
-          </div>
-          <div style="margin-left:1rem;color: #0f0;font-weight:bold;font-size: 22sp;">Passivas</div>
-          <canvas id="menu_canvas">
-          </canvas>
-        </div>
-        <canvas id="description_canvas" style="position:absolute; top:0; left:0; right: 0;bottom: 0;"></canvas>
       </div>
       <textarea id="log" readonly class="box-boder" style="background:#000; color: #0f0; height: 100px;"></textarea>
     </div>
+    <div id="menu" class="box-boder" style="position: absolute; top:20px; left: 20px; right: 20px; bottom: 20px;display: none;">
+      <button style="background: transparent;width: 40px;height: 40px;color: #0f0;border: none;font-size: 22px;" onclick="closeMenu()">X</button>
+      <div id="menu_char_div" style="margin-bottom: 1rem;width: 100%;">
+      </div>
+      <div style="margin-left:1rem;color: #0f0;font-weight:bold;font-size: 22sp;">Passivas</div>
+      <canvas id="menu_canvas">
+      </canvas>
+    </div>
+    <canvas id="description_canvas" style="position:absolute; top:0; left:0; right: 0;bottom: 0;"></canvas>
     <div id="char_select" class="box-boder" style="position: absolute; top:20px; left: 20px; right: 20px; bottom: 20px;display: flex; flex-direction: column;">
       <h1 style="margin-left: 10px;">Selecione até 3 personagens</h1>
       <div id="char_select_inner" style="overflow: scroll;">
@@ -52,7 +52,16 @@
       return a+Math.floor(Math.random()*(b-a+1));
   };
 
-  const drawSprite = (x,y,sheet,i,dCtx=ctx)=>{const size = sheet.height; dCtx.drawImage(sheet,i*size,0,size,size,x,y,size,size)}
+  const drawSprite = (x,y,sheet,i,dCtx=ctx,cutW=null,cutH=null)=>{
+    const size = sheet.height; 
+    if(cutW == null) {
+      cutW = size;
+    }
+    if(cutH == null) {
+      cutH = size;
+    }
+    dCtx.drawImage(sheet,i*size,0,cutW,cutH,x,y,cutW,cutH);
+  }
 </script>
 <script type="text/javascript" src="dice.js"></script>
 <script type="text/javascript" src="enemy.js"></script>
@@ -84,7 +93,7 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight-logArea.clientHeight;
     descriptionCanvas.width = window.innerWidth;
-    descriptionCanvas.height = window.innerHeight-logArea.clientHeight;
+    descriptionCanvas.height = window.innerHeight;
     VERTICAL = canvas.width < canvas.height;
     BUTTON_H_SCALED = BUTTON_HEIGHT * canvas.height/GAME_HEIGHT;
   }
@@ -419,28 +428,31 @@
     }
   });
   descriptionCanvas.addEventListener("click", function(e) {
+    const x = e.clientX;
+    const y = e.clientY;
     if(menuOpened) {
       descriptionCanvas.style.pointerEvents = 'none';
-      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const el = document.elementFromPoint(x, y);
       descriptionCanvas.style.pointerEvents = 'auto';
+      const menuRect = menu.getBoundingClientRect();
 
-      if(el == canvas) {
-        closeMenu();
-      } else {
+      if(x >= menuRect.left && x <= menuRect.right && y >= menuRect.top && y <= menuRect.bottom) {
         el.dispatchEvent(new MouseEvent('click', {
           bubbles: true,
           cancelable: true,
-          clientX: e.clientX,
-          clientY: e.clientY,
+          clientX: x,
+          clientY: y,
           view: window
         }));
+      } else {
+        closeMenu();
       }
     } else {
       canvas.dispatchEvent(new MouseEvent('click', {
         bubbles: true,
         cancelable: true,
-        clientX: e.clientX,
-        clientY: e.clientY,
+        clientX: x,
+        clientY: y,
         view: window
       }));
     }
