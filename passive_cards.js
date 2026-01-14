@@ -86,9 +86,9 @@ const PC_CARDS = [
 	{ 
 		name:"Level +1", time:END_ROUND_TIME, description: "+1 nivel no final da fase", 
 		effect:(ctx,amount) => {
-			const before = ctx.level;
-			const after = context_addLevel(ctx,1*amount);
-			return `level ${before} - ${after}`;
+			const before = ctx.levelToUp;
+			const after = ctx.levelToUp + 1*amount;
+			return `subir de nivel ${before}x - ${after}x`;
 		}
 	},
 	{ 
@@ -96,11 +96,60 @@ const PC_CARDS = [
 		effect:(ctx,amount) => {
 			return refreshActiveCards(ctx,amount)
 		} 
-	}
+	},
+	{ 
+		name:"Compra carta", time:END_TURN_TIME, description: "compra uma carta aleatória ao final de cada turno", 
+		effect:(ctx,amount) => {
+			return context_renewCards(ctx,amount,false);
+		} 
+	},
+	{ 
+		name:"Contra ataque", time:ROLL_TIME, description: "caso tome dano no turno anterior, a rolagem fica igual ao alvo de menor valor disponível", 
+		effect:(ctx,amount) => {
+			if(ctx.lastEnemyRoll != null) {
+				const before = ctx.rollValue;
+				let min = 6;
+				for(let e of ctx.enemies) {
+					min = Math.min(min,e.min);
+				}
+				const after = context_setValue(ctx,min);
+				return `${before} - ${after}`;	
+			}
+			return 'não tomou dano no turno';
+		} 
+	},
+	{ 
+		name:"Escudo +Crítico", time:END_TURN_TIME, description: "+1 de escudo para cada ataque crítico", 
+		effect:(ctx,amount) => {
+			if(ctx.turnCritic == 0)
+				return 'Nenhum ataque critico neste turno';
+			const before = ctx.shield;
+			const after = context_addShield(ctx,ctx.turnCritic*amount);
+			return `escudo ${before} - ${after}`;
+		} 
+	},
+	{ 
+		name:"Escudo +Carta", time:END_TURN_TIME, description: "+1 de escudo para cada carta ativa utilizada", 
+		effect:(ctx,amount) => {
+			const before = ctx.shield;
+			if(ctx.playCards.length == 0)
+				return 'Nenhuma carta usada neste turno';
+			const after = context_addShield(ctx,ctx.playCards.length*amount);
+			return `escudo ${before} - ${after}`;
+		} 
+	},
 ]
 
-function newPassiveCard(context) {
-	let c = PC_CARDS[rand(0,PC_CARDS.length-1)];
+function newPassiveCard(context,passives=null) {
+	let c;
+	if(passives == null) {
+		c = PC_CARDS[rand(0,PC_CARDS.length-1)];
+	} else {
+		if(passives.length == 0)
+			return null;
+		let random = rand(0,passives.length-1);
+		c = PC_CARDS[passives[random]];
+	}
 	if(context.passiveCards[c.name]) {
 		context.passiveCards[c.name].amount += 1;
 	} else {
@@ -121,6 +170,21 @@ function passive_apply(context, gameTime) {
 		}
 	});
 	
-    context.previewValue = previewTurn(context).calcValue;
+	context.previewValue = previewTurn(context).calcValue;
+	return log.replace(/\n+$/, '');
+}
+
+function innate_apply(context, gameTime) {
+	const passives = context.innate;
+
+	var log = "";
+	passives.forEach(p=>{
+		if(p.time == gameTime) {
+			let effect = p.effect(context,1);
+			log += `Habilidade inata ${p.name}: ${effect}\n`;
+		}
+	});
+	
+	context.previewValue = previewTurn(context).calcValue;
 	return log.replace(/\n+$/, '');
 }
