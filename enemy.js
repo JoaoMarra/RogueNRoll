@@ -14,63 +14,75 @@ const ENEMY_HEIGHT = 80;
 const ENEMIES = [
 	{
 		name: "Baú-monstro",
-		desc: "",
-		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,0)}
+		description: "Parece um tesouro… até morder você. Gosta de aventureiros desatentos e dedos desprotegidos.",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,0)},
+		spritePos:0
 	},
 	{
 		name: "Devorador de mentes",
-		desc: "",
-		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,1)}
+		description: "Não quer seu dinheiro, sua experiência ou seu equipamento. Só quer suas ideias. Literalmente.",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,1)},
+		spritePos:1
 	},
 	{
 		name: "Dragão",
-		desc: "",
-		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,2)}
+		description: "Enorme, cuspindo fogo e não se importa em pisar em você.",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,2)},
+		spritePos:2
 	},
 	{
 		name: "Escorpião",
-		desc: "",
-		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,3)}
+		description: "Pequeno, rápido e armado na traseira. Persegue aventureiros só para provar um ponto: tamanho não é documento.",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,3)},
+		spritePos:3
 	},
 	{
 		name: "Homem-Peixe",
-		desc: "",
-		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,4)}
+		description: "Metade homem, metade peixe, 100% fedido. Sai da água só quando percebe que aventureiros não nadam tão bem assim.",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,4)},
+		spritePos:4
 	},
 	{
 		name: "Fogo-Fátuo",
-		desc: "",
-		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,5)}
+		description: "Uma luzinha simpática… que leva você direto para a morte. Curiosamente, nega responsabilidade legal.",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,5)},
+		spritePos:5
 	},
 	{
 		name: "Pantera Deslocadora",
-		desc: "",
-		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,6)}
+		description: "Uma pantera que está ali… ou ali… ou talvez ali atrás de você.",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,6)},
+		spritePos:6
 	},
 	{
 		name: "Morcego",
-		desc: "",
-		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,7)}
+		description: "Dorme de cabeça para baixo e acorda de mau humor. Ataques noturnos porque ninguém deixa ele dormir em paz.",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,7)},
+		spritePos:7
 	},
 	{
 		name: "Observador",
-		desc: "",
-		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,8)}
+		description: "Um olho gigante cheio de olhos menores. Vive para vigiar, julgar e atirar raios que arruínam o seu dia.",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,8)},
+		spritePos:8
 	},
 	{
 		name: "Cavaleiro Púrpura",
-		desc: "",
-		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,9)}
+		description: "rmadura pesada, espada afiada e zero senso de humor. A cor favorita é roxo e a atividade favorita é te derrubar.",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,9)},
+		spritePos:9
 	},
 	{
 		name: "Meleca-Viva",
-		desc: "",
-		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,10)}
+		description: "Uma poça gosmenta com personalidade. Dissolve armas, armaduras e autoestima.",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,10)},
+		spritePos:10
 	},
 	{
 		name: "Troll",
-		desc: "",
-		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,11)}
+		description: "Grande, forte. Bate em você e reclama quando você não cai logo.",
+		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,11)},
+		spritePos:11
 	},
 ]
 

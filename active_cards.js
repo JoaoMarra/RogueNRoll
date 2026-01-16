@@ -4,7 +4,7 @@ const ACTIVE_HEIGHT = 80;
 
 const AC_CARDS = [
 	{ 
-		name:"+1", description: "+1 no valor de ataque", 
+		name:"+1", description: "Adiciona 1 no valor do ataque.", 
 		effect:(ctx) => {
 			const before = ctx.calcValue;
 			const after = context_addValue(ctx,1);
@@ -12,7 +12,7 @@ const AC_CARDS = [
 		} 
 	},
 	{ 
-		name:"+2", description: "+2 no valor de ataque",
+		name:"+2", description: "Adiciona 2 no valor do ataque.",
 		effect:(ctx) => {
 			const before = ctx.calcValue;
 			const after = context_addValue(ctx,2);
@@ -20,7 +20,7 @@ const AC_CARDS = [
 		} 
 	},
 	{ 
-		name:"-1", description: "-1 no valor de ataque", 
+		name:"-1", description: "Subtrai 1 no valor do ataque.", 
 		effect:(ctx) => {
 			const before = ctx.calcValue;
 			const after = context_addValue(ctx,-1);
@@ -28,7 +28,7 @@ const AC_CARDS = [
 		}
 	},
 	{ 
-		name:"-2", description: "-2 no valor de ataque",
+		name:"-2", description: "Subtrai 2 no valor do ataque.",
 		effect:(ctx) => {
 			const before = ctx.calcValue;
 			const after = context_addValue(ctx,-2);
@@ -36,7 +36,7 @@ const AC_CARDS = [
 		}
 	},
 	{ 
-		name:"set 3", description: "valor de ataque definido para 3", 
+		name:"Fixa 3", description: "Muda o valor do ataque para 3.", 
 		effect:(ctx) => {
 			const before = ctx.calcValue;
 			const after = context_setValue(ctx, 3);
@@ -44,7 +44,7 @@ const AC_CARDS = [
 		}
 	},
 	{ 
-		name:"set 1", description: "valor de ataque definido para 1", 
+		name:"Fixa 1", description: "Muda o valor do ataque para 1.", 
 		effect:(ctx) => {
 			const before = ctx.calcValue;
 			const after = context_setValue(ctx, 1);
@@ -52,7 +52,7 @@ const AC_CARDS = [
 		}
 	},
 	{ 
-		name:"set 6", description: "valor de ataque definido para 6", 
+		name:"Fixa 6", description: "Muda o valor do ataque para 6.", 
 		effect:(ctx) => {
 			const before = ctx.calcValue;
 			const after = context_setValue(ctx, 6);
@@ -60,7 +60,7 @@ const AC_CARDS = [
 		}
 	},
 	{ 
-		name:"Rouba vida", description: "ganha escudo de acordo com o valor de ataque",
+		name:"Rouba Vida", description: "Ganha escudo de acordo com o valor do ataque.",
 		effect:(ctx) => {
 			const before = ctx.shield;
 			const after = context_addShield(ctx,ctx.calcValue);

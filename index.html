@@ -31,27 +31,14 @@
     </div>
   </div>
 </body>
+<script type="text/javascript" src="globals.js"></script>
 <script>
-
 /* ================== GLOBAL CONSTANTS/FUNCTIONS ================== */
 
   const FPS = 30;
   const TICK_TIME = FPS/1000.0;
-
-  const ROLL_TIME = 0
-  const END_ATTACK = 1
-  const ENEMY_TIME = 2
-  const END_TURN_TIME = 3
-  const END_ROUND_TIME = 4
-
   const BACKGROUND_COLOR = '#222'
 
-  const rand = (a,b)=>{
-    if(a==b)
-      return a;
-    else
-      return a+Math.floor(Math.random()*(b-a+1));
-  };
 
   const drawSprite = (x,y,sheet,i,dCtx=ctx,cutW=null,cutH=null)=>{
     const size = sheet.height; 

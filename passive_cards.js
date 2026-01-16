@@ -1,6 +1,6 @@
 const PC_CARDS = [
 	{
-		name:"Sempre +1", time:ROLL_TIME, description: "+1 no valor do dado",
+		name:"Sempre +1", time:ROLL_TIME, description: "Adiciona 1 no valor da rolagem no [PÓS ROLAGEM].",
 		effect:(ctx, amount) => {
 			const before = ctx.calcValue;
 			const after = context_addValue(ctx,1*amount);
@@ -8,7 +8,7 @@ const PC_CARDS = [
 		} 
 	},
 	{ 
-		name:"Sempre -1", time:ROLL_TIME, description: "-1 no valor do dado",
+		name:"Sempre -1", time:ROLL_TIME, description: "Subtrai 1 do valor da rolagem no [PÓS ROLAGEM].",
 		effect:(ctx, amount) => {
 			const before = ctx.calcValue;
 			const after = context_addValue(ctx,-1*amount);
@@ -16,7 +16,7 @@ const PC_CARDS = [
 		},  
 	},
 	{ 
-		name:"Par +1", time:ROLL_TIME, description: "+1 no valor do dado, se ele for par", 
+		name:"Par +1", time:ROLL_TIME, description: "Adiciona 1 no valor da rolagem, se o valor da rolagem for par, no [PÓS ROLAGEM].", 
 		effect:(ctx, amount) => {
 			const before = ctx.calcValue;
 			let after = ctx.calcValue;
@@ -27,7 +27,7 @@ const PC_CARDS = [
 		}
 	},
 	{ 
-		name:"Impar +1", time:ROLL_TIME, description: "+1 no valor do dado, se ele for impar", 
+		name:"Impar +1", time:ROLL_TIME, description: "Adiciona 1 no valor da rolagem, se o valor da rolagem for ímpar, no [PÓS ROLAGEM].", 
 		effect:(ctx, amount) => {
 			const before = ctx.calcValue;
 			let after = ctx.calcValue;
@@ -38,7 +38,7 @@ const PC_CARDS = [
 		} 
 	},
 	{ 
-		name:"Par -1", time:ROLL_TIME, description: "-1 no valor do dado, se ele for par", 
+		name:"Par -1", time:ROLL_TIME, description: "Subtrai 1 do valor da rolagem, se o valor da rolagem for par, no [PÓS ROLAGEM].", 
 		effect:(ctx, amount) => {
 			const before = ctx.calcValue;
 			let after = ctx.calcValue;
@@ -49,7 +49,7 @@ const PC_CARDS = [
 		}
 	},
 	{ 
-		name:"Impar -1", time:ROLL_TIME, description: "-1 no valor do dado, se ele for impar", 
+		name:"Impar -1", time:ROLL_TIME, description: "Subtrai 1 do valor da rolagem, se o valor da rolagem for ímpar, no [PÓS ROLAGEM].", 
 		effect:(ctx, amount) => {
 			const before = ctx.calcValue;
 			let after = ctx.calcValue;
@@ -60,7 +60,7 @@ const PC_CARDS = [
 		} 
 	},
 	{ 
-		name:"Barreira +1", time:ENEMY_TIME, description: "-1 no valor do dano dos inimigos", 
+		name:"Barreira +1", time:ENEMY_TIME, description: "Subtrai 1 do valor do dano dos inimigos na [DEFESA].", 
 		effect:(ctx, amount) => {
 			const before = ctx.enemyRoll;
 			const after = context_addEnemyRoll(ctx,-1*amount);
@@ -68,7 +68,7 @@ const PC_CARDS = [
 		} 
 	},
 	{ 
-		name:"Escudo +1", time:END_ROUND_TIME, description: "+1 de escudo ao final da fase", 
+		name:"Escudo +1", time:END_ROUND_TIME, description: "Ganha 1 escudo no [FIM DE FASE].", 
 		effect:(ctx, amount) => {
 			const before = ctx.shield;
 			const after = context_addShield(ctx,1*amount);
@@ -76,7 +76,7 @@ const PC_CARDS = [
 		}
 	},
 	{ 
-		name:"Rouba alma", time:END_TURN_TIME, description: "+1 de escudo para cada inimigo derrotado", 
+		name:"Rouba Alma", time:END_TURN_TIME, description: "Ganha 1 escudo para cada inimigo derrotado no [FIM DE TURNO].", 
 		effect:(ctx,amount) => {
 			const before = ctx.shield;
 			const after = context_addShield(ctx,ctx.turnKill*amount);
@@ -84,7 +84,7 @@ const PC_CARDS = [
 		} 
 	},
 	{ 
-		name:"Level +1", time:END_ROUND_TIME, description: "+1 nivel no final da fase", 
+		name:"Level +1", time:END_ROUND_TIME, description: "Ganha 1 nivel extra, no [FIM DE FASE].", 
 		effect:(ctx,amount) => {
 			const before = ctx.levelToUp;
 			const after = ctx.levelToUp + 1*amount;
@@ -92,13 +92,13 @@ const PC_CARDS = [
 		}
 	},
 	{ 
-		name:"Apostar", time:END_TURN_TIME, description: "troca uma carta aleatória ao final de cada turno", 
+		name:"Apostar", time:END_TURN_TIME, description: "Descarta uma carta ativa e compra outra no [FIM DE TURNO].", 
 		effect:(ctx,amount) => {
 			return refreshActiveCards(ctx,amount)
 		} 
 	},
 	{ 
-		name:"Compra carta", time:END_TURN_TIME, description: "compra uma carta aleatória ao final de cada turno", 
+		name:"Compra Carta", time:END_TURN_TIME, description: "Compra uma carta ativa extra no [FIM DE TURNO].", 
 		effect:(ctx,amount) => {
 			let log = context_renewCards(ctx,3+amount,false);
 			positionActiveCards(ctx);
@@ -106,7 +106,7 @@ const PC_CARDS = [
 		} 
 	},
 	{ 
-		name:"Contra ataque", time:ROLL_TIME, description: "caso tome dano no turno anterior, a rolagem fica igual ao alvo de menor valor disponível", 
+		name:"Contra Ataque", time:ROLL_TIME, description: "Caso tenha sido atingido pelos inimigos no turno anterior, o valor da rolagem após aplicação das cartas passivas, fica igual ao inimigo de menor fraqueza disponível. Aplicada no [PÓS ROLAGEM].", 
 		effect:(ctx,amount) => {
 			if(ctx.lastEnemyRoll != null) {
 				const before = ctx.rollValue;
@@ -121,7 +121,7 @@ const PC_CARDS = [
 		} 
 	},
 	{ 
-		name:"Escudo +Crítico", time:END_TURN_TIME, description: "+1 de escudo para cada ataque crítico", 
+		name:"Escudo +Crítico", time:END_TURN_TIME, description: "Ganha 1 escudo para cada inimigo derrotado com ataque crítico neste turno. Aplicada no [FIM DE TURNO].", 
 		effect:(ctx,amount) => {
 			if(ctx.turnCritic == 0)
 				return 'Nenhum ataque critico neste turno';
@@ -131,7 +131,7 @@ const PC_CARDS = [
 		} 
 	},
 	{ 
-		name:"Escudo +Carta", time:END_ATTACK, description: "+1 de escudo para cada carta ativa utilizada", 
+		name:"Escudo +Carta", time:END_ATTACK, description: "Ganha 1 escudo para cada carta ativa utilizada no ataque deste turno. Aplicada no [PÓS ATAQUE].", 
 		effect:(ctx,amount) => {
 			const before = ctx.shield;
 			if(ctx.playCards.length == 0)
@@ -141,7 +141,7 @@ const PC_CARDS = [
 		} 
 	},
 	{
-		name:"Escudo Extra", time:ROLL_TIME, description: "escudo pode ultrapassar o máximo em +1", 
+		name:"Escudo Extra", time:ROLL_TIME, description: "A quantidade de escudos máxima pode ultrapassar em 1 unidade por carta 'Escudo Extra'. No [FIM DE TURNO], a quantidade de escudos que ultrapassarem a quantidade de escudos máxima devem ser descartados.", 
 		effect:(ctx,amount) => {
 			const before = ctx.extraShield;
 			ctx.extraShield += amount;

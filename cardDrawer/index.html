@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Card Drawer</title>
+    <style>
+        @font-face {
+            font-family: 'pixel';
+            src: url('pixel.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        body {
+            font-family: 'pixel', arial;
+        }
+    </style>
+</head>
+<body style="width: 100%;height: 100vh;">
+    <div style="display: flex;width: 100%;height: 100%;">
+        <div style="display: flex; flex-direction: column; margin-left: auto; margin-right: auto;">
+            <div id="canvas_div" style="display: flex; margin-top: auto; margin-bottom: auto;flex-wrap: wrap;max-width: 1320px;">
+
+            </div>
+        </div>
+    </div>
+
+</body>
+<script>
+    const WIDTH = 660;
+    const HEIGHT = 1024;
+
+    let scaleX,scaleY;
+
+    var ctx;
+
+    function setFontSize(size) {
+        ctx.font = `${size}px pixel`;
+    }
+
+    const drawSprite = (x,y,sheet,i,scaleX=null,scaleY=null)=>{
+        const size = sheet.height;
+        if(scaleX == null) {
+            scaleX = size;
+        }
+        if(scaleY == null) {
+            scaleY = size;
+        }
+        ctx.drawImage(sheet,i*size,0,size,size,x,y,scaleX,scaleY);
+    }
+
+    const PLATE_HEIGHT = 60;
+    function drawPlate(x,y,w,color,colorB) {
+        ctx.save();
+        ctx.translate(x,y);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(0,15);
+        ctx.lineTo(15,0);
+        ctx.lineTo(w-15,0);
+        ctx.lineTo(w,15);
+        ctx.lineTo(w,PLATE_HEIGHT-10);
+        ctx.lineTo(w-10,PLATE_HEIGHT);
+        ctx.lineTo(10,PLATE_HEIGHT);
+        ctx.lineTo(0,PLATE_HEIGHT-10);
+        ctx.closePath();
+        ctx.fill();
+
+        const boltSize = 8;
+        ctx.fillStyle = colorB;
+        ctx.beginPath();
+        ctx.arc(15,15, boltSize, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(w-15,15, boltSize, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(15,PLATE_HEIGHT-15, boltSize, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(w-15,PLATE_HEIGHT-15, boltSize, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawBackBorder(color) {
+        const boder = 30;
+        ctx.fillStyle = "#222";
+        ctx.beginPath();
+        ctx.roundRect(0, 0, WIDTH, HEIGHT, 20);
+        ctx.fill();
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(boder, boder, WIDTH-2*boder, HEIGHT-2*boder, 20);
+        ctx.fill();
+
+        ctx.strokeStyle = "#222";
+        ctx.lineWidth = 2;
+        drawHatchedRect(0, 0, WIDTH, HEIGHT);
+        ctx.save();
+
+        ctx.fillStyle = "#222";
+        ctx.beginPath();
+        ctx.arc(WIDTH/2,HEIGHT/2,160,0,2*Math.PI);
+        ctx.fill();
+    }
+
+    function drawBorder(color) {
+        const boder = 10;
+
+        ctx.fillStyle = "#222";
+        ctx.beginPath();
+        ctx.roundRect(0, 0, WIDTH, HEIGHT, 20);
+        ctx.fill();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(boder, boder, WIDTH-2*boder, HEIGHT-2*boder, 20);
+        ctx.fill();
+        ctx.fillStyle = "#222";
+        ctx.beginPath();
+        ctx.roundRect(2*boder, 2*boder, WIDTH-4*boder, HEIGHT-4*boder, 20);
+        ctx.fill();
+    }
+
+    function drawHatchedRect(x, y, w, h, spacing = 50) {
+        ctx.beginPath();
+        for (let i = -h; i < w; i += spacing) {
+            ctx.moveTo(x + i, y);
+            ctx.lineTo(x + i + h, y + h);
+        }
+
+        for (let i = 2*h; i > -h; i -= spacing) {
+            ctx.moveTo(x + i, y);
+            ctx.lineTo(x + i - h, y+h);
+        }
+        ctx.stroke();
+    }
+
+
+    const ART_RECT = WIDTH-120;
+    const ART_HEIGHT = ART_RECT/1.68;
+    function drawArt(sprite,position,offsetY=0) {
+        const charSize = 168;
+        ctx.save();
+        ctx.translate(WIDTH/2-ART_RECT/2, WIDTH/2-ART_RECT/2+offsetY);
+        ctx.strokeStyle = "#0f0";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.roundRect(0, 0, ART_RECT, ART_HEIGHT, 20);
+        ctx.stroke();
+
+        const spriteX = ART_RECT/2-charSize/2;
+        const spriteY = ART_HEIGHT/2-charSize/2+offsetY;
+        drawSprite(spriteX,spriteY,sprite,position,charSize,charSize)
+
+        ctx.restore();
+    }
+</script>
+<script type="text/javascript" src="../globals.js"></script>
+<script type="text/javascript" src="../passive_cards.js"></script>
+<script type="text/javascript" src="../active_cards.js"></script>
+<script type="text/javascript" src="../characters.js"></script>
+<script type="text/javascript" src="../enemy.js"></script>
+<script type="text/javascript" src="character_card.js"></script>
+<script type="text/javascript" src="enemy_card.js"></script>
+<script type="text/javascript" src="passive_card_drawer.js"></script>
+<script type="text/javascript" src="active_card_drawer.js"></script>
+<script>
+
+    const canvasDiv = document.getElementById("canvas_div");
+
+    const FONT = new FontFace('pixel', 'url(../pixel.ttf)');
+    FONT.load().then(async (font) => {
+        document.fonts.add(font);
+
+        for(const c of CHARACTERS) {
+            let canvas = document.createElement('canvas');
+            canvas.width = WIDTH/2;
+            canvas.height = HEIGHT/2;
+            let canvasBack = document.createElement('canvas');
+            canvasBack.width = WIDTH/2;
+            canvasBack.height = HEIGHT/2;
+
+            await mainDraw(canvas, canvasBack, c, character_drawCard);
+
+            canvasDiv.appendChild(canvas);
+            canvasDiv.appendChild(canvasBack);
+
+            for(const p of c.passives) {
+                let canvas = document.createElement('canvas');
+                canvas.width = WIDTH/2;
+                canvas.height = HEIGHT/2;
+                let canvasBack = document.createElement('canvas');
+                canvasBack.width = WIDTH/2;
+                canvasBack.height = HEIGHT/2;
+
+                await mainDraw(canvas, canvasBack, [PC_CARDS[p],c.color], passive_drawCard);
+
+                canvasDiv.appendChild(canvas);
+                canvasDiv.appendChild(canvasBack);
+            }
+
+            for(const p of c.actives) {
+                let canvas = document.createElement('canvas');
+                canvas.width = WIDTH/2;
+                canvas.height = HEIGHT/2;
+                let canvasBack = document.createElement('canvas');
+                canvasBack.width = WIDTH/2;
+                canvasBack.height = HEIGHT/2;
+
+                await mainDraw(canvas, canvasBack, [AC_CARDS[p],c.color], active_drawCard);
+
+                canvasDiv.appendChild(canvas);
+                canvasDiv.appendChild(canvasBack);
+            }
+            // break;
+        }
+
+        // return;
+
+        for(const e of ENEMIES) {
+            const canvas = document.createElement('canvas');
+            canvas.width = WIDTH/2;
+            canvas.height = HEIGHT/2;
+            const canvasBack = document.createElement('canvas');
+            canvasBack.width = WIDTH/2;
+            canvasBack.height = HEIGHT/2;
+
+            await mainDraw(canvas, canvasBack, e, enemy_drawCard);
+
+            canvasDiv.appendChild(canvas);
+            canvasDiv.appendChild(canvasBack);
+        }
+    });
+
+    async function mainDraw(cv, bcv, item, drawCall) {
+        return new Promise((result)=> {
+            scaleX = cv.width/WIDTH;
+            scaleY = cv.height/HEIGHT;
+
+            ctx = cv.getContext("2d");
+            ctx.save();
+            ctx.scale(scaleX, scaleY);
+
+            if(bcv != null) {
+                ctx = bcv.getContext("2d");
+                ctx.save();
+                ctx.scale(scaleX, scaleY);
+            }
+
+            drawCall(item,cv, bcv)
+            .then(()=> {
+                ctx = cv.getContext("2d");
+                ctx.restore();
+                if(bcv != null) {
+                    ctx = bcv.getContext("2d");
+                    ctx.restore();
+                }
+
+                result();
+            });
+        });
+    }
+</script>
