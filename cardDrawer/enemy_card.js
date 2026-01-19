@@ -2,16 +2,14 @@
 var SPRITE;
 var ENEMY;
 function enemy_drawCard(ene, canvas, backCanvas) {
-	return new Promise((result)=> {
+	return new Promise(async (result)=> {
 		ENEMY = ene;
-		SPRITE = new Image();
-		SPRITE.src = '../sprites/enemies.png';
-		SPRITE.onload = () => {
-			const drawer = new EnemyDrawer();
-			drawer.draw(canvas, backCanvas);
+		SPRITE = await loadImageSafe('../sprites/enemies.png');
+		
+		const drawer = new EnemyDrawer();
+		drawer.draw(canvas, backCanvas);
 
-			result();
-		};
+		result();
 	});
 }
 const ENEMY_RED = "#FF0000";
@@ -37,7 +35,8 @@ class EnemyDrawer {
 		setFontSize(30);
 		const label = "INIMIGO";
 		ctx.fillText(label, WIDTH/2-ctx.measureText(label).width/2,WIDTH/2-ART_RECT/2+PLATE_HEIGHT/2+15);
-		this.drawDescription(ENEMY.description);
+		const passive = ENEMY.passive != null? ENEMIES_PASSIVE[ENEMY.passive] : null;
+		this.drawDescription(ENEMY.description, passive);
 		this.drawName(ENEMY.name);
 		this.drawWeakness(this.randomWeakness());
 
@@ -45,7 +44,7 @@ class EnemyDrawer {
 		drawBackBorder(ENEMY_RED);
 	}
 
-	drawDescription(description) {
+	drawDescription(description, passive) {
 		const descRect = HEIGHT-(ART_HEIGHT+(WIDTH/2-ART_RECT/2))-50-(PLATE_HEIGHT-20)-(PLATE_HEIGHT-20);
 		ctx.save();
 		ctx.translate(WIDTH/2-ART_RECT/2, WIDTH/2-ART_RECT/2+ART_HEIGHT+10+(PLATE_HEIGHT-20));
@@ -80,6 +79,25 @@ class EnemyDrawer {
 			}
 			ctx.fillText(text,x,y+textSize);
 			x += measure+8;
+		}
+		y += textSize+4;
+
+		if(passive != null) {
+			const plateW = ART_RECT-100;
+			drawPlate(50, y+margin, plateW, "#cd7f32", "#a46628");
+			let text = passive.name;
+			ctx.fillText(text,(ART_RECT)/2-ctx.measureText(text).width/2,y+margin+PLATE_HEIGHT/2+textSize/2);
+			x = sX;
+			y = y+margin+PLATE_HEIGHT+20;
+			for(text of passive.description.split(" ")) {
+				const measure = ctx.measureText(text).width;
+				if(x+measure > wW+sX) {
+					x = sX;
+					y += textSize+4;
+				}
+				ctx.fillText(text,x,y+textSize);
+				x += measure+8;
+			}
 		}
 
 		ctx.restore();

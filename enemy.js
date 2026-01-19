@@ -124,7 +124,7 @@ const ENEMIES = [
 	},
 	{
 		name: "Cavaleiro Púrpura",
-		description: "rmadura pesada, espada afiada e zero senso de humor. A cor favorita é roxo e a atividade favorita é te derrubar.",
+		description: "Armadura pesada, espada afiada e zero senso de humor. A cor favorita é roxo e a atividade favorita é te derrubar.",
 		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,9)},
 		spritePos:9,
 		passive:4

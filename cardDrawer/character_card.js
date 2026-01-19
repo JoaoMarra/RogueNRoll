@@ -3,20 +3,15 @@ var SPRITE;
 var DICE;
 var CHARACTER;
 function character_drawCard(char, canvas, backCanvas) {
-	return new Promise((result)=> {
+	return new Promise(async (result)=> {
 		CHARACTER = char;
-		DICE = new Image();
-		DICE.src = "../sprites/dado.png";
-		DICE.onload = () => {
-			SPRITE = new Image();
-			SPRITE.src = '../sprites/characters.png';
-			SPRITE.onload = () => {
-				const drawer = new CharDrawer();
-				drawer.draw(canvas, backCanvas);
+		DICE = await loadImageSafe("../sprites/dado.png");
+		SPRITE = await loadImageSafe('../sprites/characters.png');
 
-				result();
-			};
-		};
+		const drawer = new CharDrawer();
+		drawer.draw(canvas, backCanvas);
+
+		result();
 	});
 }
 
