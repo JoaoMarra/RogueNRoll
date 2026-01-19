@@ -20,11 +20,18 @@ const GAME_CONTEXT = {
     characters: [],
     possibleActive: [],
     levelToUp:1,
-    abnormalStatus:{},
-    abnormalToApply:{}
+    abnormalStatus:{}
 };
 
 var PREVIEW_CONTEXT;
+
+function context_causeAbnormal(context, abnormal) {
+    if(!context.abnormalStatus[abnormal.name]) {
+        context.abnormalStatus[abnormal.name] = abnormal;
+        return true;
+    }
+    return false;
+}
 
 function context_resetTurn(context) {
     context.passedTurn = false;
@@ -40,10 +47,6 @@ function context_resetTurn(context) {
     context.enemies.forEach((e) => {
         e.block = false;
     });
-    Object.values(context.abnormalToApply).forEach((a)=>{
-        context.abnormalStatus[a.name] = a;
-    });
-    context.abnormalToApply = {};
     context.phase=GAME_PHASES[0];
     PREVIEW_CONTEXT = null;
 }
@@ -178,10 +181,6 @@ function context_levelCharacter(context, char) {
 function context_blockEvenEnemies(context) {
     const value = context.calcValue;
 
-    if(value %2 != 0) {
-        return 'Valor de ataque não é par';
-    }
-
     var log = "";
     context.enemies.forEach((e)=> {
         if(e.min %2 == 0 && e.max %2 == 0) {
@@ -197,10 +196,6 @@ function context_blockEvenEnemies(context) {
 
 function context_blockOddEnemies(context) {
     const value = context.calcValue;
-
-    if(value %2 == 0) {
-        return 'Valor de ataque não é ímpar';
-    }
 
     var log = "";
     context.enemies.forEach((e)=> {

@@ -14,28 +14,20 @@ const ENEMY_HEIGHT = 80;
 const ENEMIES_PASSIVE = [
 	{
 		name:"Limpa mente",
-		description:"Aplica efeito de [MUDO] até o [FIM DE TURNO], caso os inimigos tenham causado algum dano no turno anterior. Aventureiros com [MUDO] não podem usar cartas ativas.",
-		time:ROLL_TIME,
+		description:"Aplica efeito de [MUDO] até o [FIM DE TURNO], caso os inimigos tenham causado algum dano neste turno.",
+		time:END_TURN_TIME,
 		apply:(ctx,e)=>{
 			const abnormal = AB_STATUS[0];
-			if(!ctx.abnormalToApply[abnormal.name]) {
-				ctx.abnormalToApply[abnormal.name] = abnormal;
-				return true;
-			}
-			return false;
+			return context_causeAbnormal(ctx, abnormal);
 		}
 	},
 	{
 		name:"Envenenamento",
-		description:"Aplica o efeito de [VENENO] até o [FIM DE FASE], caso os inimigos tenham causado algum dano no turno anterior. Aventureiros com [VENENO] perdem 1 escudo no [FIM DE TURNO].",
+		description:"Aplica o efeito de [VENENO] até o [FIM DE FASE], caso os inimigos tenham causado algum dano neste turno.",
 		time:END_TURN_TIME,
 		apply:(ctx,e)=>{
 			const abnormal = AB_STATUS[1];
-			if(!ctx.abnormalToApply[abnormal.name]) {
-				ctx.abnormalToApply[abnormal.name] = abnormal;
-				return true;
-			}
-			return false;
+			return context_causeAbnormal(ctx, abnormal);
 		}
 	},
 	{
@@ -48,10 +40,19 @@ const ENEMIES_PASSIVE = [
 	},
 	{
 		name:"Multiplicar",
-		description:"Duplica a efetividade do inimigo, caso os inimigos tenham causado algum dano no turno anterior. O dano que os inimigos causam é multiplicado por sua efetividade.",
+		description:"Duplica a efetividade do inimigo, caso os inimigos tenham causado algum dano neste turno.",
 		time:END_TURN_TIME,
 		apply:(ctx,e)=>{
 			e.effect *= 2;
+			return true;
+		}
+	},
+	{
+		name:"Ataque bruto",
+		description:"Dobra o dano causado pelos inimigos.",
+		time:ENEMY_TIME,
+		apply:(ctx,e)=>{
+			ctx.enemyRoll *= 2;
 			return true;
 		}
 	}
@@ -126,7 +127,7 @@ const ENEMIES = [
 		description: "rmadura pesada, espada afiada e zero senso de humor. A cor favorita é roxo e a atividade favorita é te derrubar.",
 		draw:(x,y)=>{drawSprite(x,y,ENEMIES_SPRITES,9)},
 		spritePos:9,
-		passive:null
+		passive:4
 	},
 	{
 		name: "Meleca-Viva",
@@ -191,6 +192,10 @@ function enemy_draw(ctx,x,y,e,context) {
 		ctx.fillStyle="#fff";
 		ctx.fillText(label,ENEMY_WIDTH/2-measure.width/2,ENEMY_HEIGHT/2+6);
 	}
+	if(e.data.passive != null) {
+		ctx.fillStyle="#7c14de";
+		drawStar(ctx, ENEMY_WIDTH/2-10,-ENEMY_HEIGHT/2+10, 8,4);
+	}
 	ctx.restore();
 }
 
@@ -204,10 +209,10 @@ function enemy_includes(ctx,e,x,y) {
 	return (x >= ex && x <= ex+ENEMY_WIDTH && y >= ey && y <= ey+ENEMY_HEIGHT);
 }
 
-function enemy_pasive_apply(context, rollValue) {
+function enemy_pasive_apply(context, time) {
 	var log = "";
-	if(rollValue > 0) {
-		const enemiesiWithStatus = context.enemies.filter((e)=>{return (!e.block && e.data.passive != null)});
+	if(context.enemyRoll > 0) {
+		const enemiesiWithStatus = context.enemies.filter((e)=>{return (!e.block && e.data.passive != null && ENEMIES_PASSIVE[e.data.passive].time == time)});
 		enemiesiWithStatus.forEach((es)=> {
 			if(ENEMIES_PASSIVE[es.data.passive].apply(context,es)) {
 				log += `${es.data.name} aplicou ${ENEMIES_PASSIVE[es.data.passive].name}\n`;

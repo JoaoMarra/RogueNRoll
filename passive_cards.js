@@ -78,6 +78,8 @@ const PC_CARDS = [
 	{ 
 		name:"Rouba Alma", time:END_TURN_TIME, description: "Ganha 1 escudo para cada inimigo derrotado no [FIM DE TURNO].", 
 		effect:(ctx,amount) => {
+			if(ctx.turnKill == 0)
+				return "nenhum inimigo derrotado";
 			const before = ctx.shield;
 			const after = context_addShield(ctx,ctx.turnKill*amount);
 			return `escudo ${before} - ${after}`;
@@ -106,7 +108,7 @@ const PC_CARDS = [
 		} 
 	},
 	{ 
-		name:"Contra Ataque", time:ROLL_TIME, description: "Caso tenha sido atingido pelos inimigos no turno anterior, o valor da rolagem após aplicação das cartas passivas, fica igual ao inimigo de menor fraqueza disponível. Aplicada no [PÓS ROLAGEM].", 
+		name:"Contra Ataque", time:ROLL_TIME, description: "Caso tenha sido atingido pelos inimigos no turno anterior, o valor da rolagem após aplicação das cartas passivas, fica igual ao inimigo de menor fraqueza disponível.", 
 		effect:(ctx,amount) => {
 			if(ctx.lastEnemyRoll != null) {
 				const before = ctx.rollValue;
@@ -121,7 +123,7 @@ const PC_CARDS = [
 		} 
 	},
 	{ 
-		name:"Escudo +Crítico", time:END_TURN_TIME, description: "Ganha 1 escudo para cada inimigo derrotado com ataque crítico neste turno. Aplicada no [FIM DE TURNO].", 
+		name:"Escudo +Crítico", time:END_TURN_TIME, description: "Ganha 1 escudo para cada inimigo derrotado com ataque crítico neste turno.", 
 		effect:(ctx,amount) => {
 			if(ctx.turnCritic == 0)
 				return 'Nenhum ataque critico neste turno';
@@ -131,7 +133,7 @@ const PC_CARDS = [
 		} 
 	},
 	{ 
-		name:"Escudo +Carta", time:END_ATTACK, description: "Ganha 1 escudo para cada carta ativa utilizada no ataque deste turno. Aplicada no [PÓS ATAQUE].", 
+		name:"Escudo +Carta", time:END_ATTACK, description: "Ganha 1 escudo para cada carta ativa utilizada no ataque deste turno.", 
 		effect:(ctx,amount) => {
 			const before = ctx.shield;
 			if(ctx.playCards.length == 0)

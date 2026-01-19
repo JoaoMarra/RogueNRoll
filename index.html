@@ -162,7 +162,7 @@
 
   function newEnemy() {
     // let a=rand(1,5), b=rand(a+1,a+3);
-    // return {min:a,max:Math.min(b,6),hp:1,data:ENEMIES[t],block:false,effect:1};
+    // return {min:a,max:Math.min(b,6),hp:1,data:ENEMIES[9],block:false,effect:1};
     if (Math.random()<0.5) {
       const v=rand(1,6);
       return {min:v,max:v,hp:1,data:ENEMIES[rand(0,ENEMIES.length-1)],block:false,effect:1};
@@ -301,6 +301,9 @@
       logs.split("\n").forEach(l=>log(l));
     }
 
+    logs = abnormal_off(context, END_ATTACK);
+    logs.split("\n").forEach(l=>log(l));
+
     if(killed) {
       endTurn(context);
       if(context.enemies.length===0) {
@@ -361,7 +364,7 @@
     const minDamage = context.level;
     const maxDamage = totalEffect * context.level;
 
-    context.enemyRoll = maxDamage;//rand(minDamage, maxDamage);
+    context.enemyRoll = context.level + totalEffect;//rand(minDamage, maxDamage);
 
     let logs = abnormal_apply(context, ENEMY_TIME);
     logs[1].split("\n").forEach(l=>log(l));
@@ -371,6 +374,9 @@
       logs = innate_apply(context, ENEMY_TIME);
       logs.split("\n").forEach(l=>log(l));
     }
+
+    logs = enemy_pasive_apply(context, ENEMY_TIME);
+    logs.split("\n").forEach(l=>log(l));
   }
 
   function resolveEnemyTurn(context) {
@@ -378,24 +384,19 @@
     const after = context_addShield(context,-context.enemyRoll);
     log(`Inimigo atacou com ${context.enemyRoll}: escudo ${before} - ${after}`);
 
-    let logs = enemy_pasive_apply(context,context.enemyRoll);
-    logs.split("\n").forEach(l=>log(l));
-
-    if(after<=0) {
-      log("GAME OVER");
-      context.phase=GAME_PHASES[3];
-    } else {
-      if(context.passedTurn) {
-        const cards = context_renewCards(context,3);
-        log(`Nova carta ativa: ${cards}`);
-        positionActiveCards(context);
-      }
-      endTurn(context);
+    if(context.passedTurn) {
+      const cards = context_renewCards(context,3);
+      log(`Nova carta ativa: ${cards}`);
+      positionActiveCards(context);
     }
+    endTurn(context);
   }
 
   function endTurn(context) {
-    let logs = abnormal_apply(context, END_TURN_TIME);
+    let logs = enemy_pasive_apply(context, END_TURN_TIME);
+    logs.split("\n").forEach(l=>log(l));
+
+    logs = abnormal_apply(context, END_TURN_TIME);
     logs[1].split("\n").forEach(l=>log(l));
     if(logs[0]) {
       logs = passive_apply(context, END_TURN_TIME);
@@ -406,7 +407,19 @@
 
     logs = abnormal_off(context, END_TURN_TIME);
     logs.split("\n").forEach(l=>log(l));
-    context_resetTurn(context);
+
+    if(!checkGameOver(context)) {
+      context_resetTurn(context);
+    }
+  }
+
+  function checkGameOver(context) {
+    if(context.shield <= 0) {
+      log("GAME OVER");
+      context.phase=GAME_PHASES[3];
+      return true;
+    }
+    return false;
   }
 
 /* ================== INPUT ================== */

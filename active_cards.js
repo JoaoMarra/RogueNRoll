@@ -68,13 +68,13 @@ const AC_CARDS = [
 		}
 	},
 	{
-		name:"Bloqueio Par",description: "Caso o valor do ataque no momento da aplicação da carta seja par, bloqueia os inimigos que tem fraqueza igual a um número par ou que o mínimo e máximo da fraqueza sejam números pares.",
+		name:"Bloqueio Par",description: "Bloqueia os inimigos que tem fraqueza igual a um número par ou que o mínimo e máximo da fraqueza sejam números pares.",
 		effect:(ctx) => {
 			return context_blockEvenEnemies(ctx);
 		}
 	},
 	{
-		name:"Bloqueio Ímpar",description: "Caso o valor do ataque no momento da aplicação da carta seja ímpar, bloqueia os inimigos que tem fraqueza igual a um número ímpar ou que o mínimo e máximo da fraqueza sejam números pares.",
+		name:"Bloqueio Ímpar",description: "Bloqueia os inimigos que tem fraqueza igual a um número ímpar ou que o mínimo e máximo da fraqueza sejam números pares.",
 		effect:(ctx) => {
 			return context_blockOddEnemies(ctx);
 		}

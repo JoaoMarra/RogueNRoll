@@ -71,3 +71,25 @@ function breakText(text, width, font, color) {
 
 	return virtualCanvas2;
 }
+
+function drawStar(ctx, cx, cy, outerRadius,innerRadius) {
+	const points = 5;
+    const angle = Math.PI / points;
+    
+    ctx.beginPath();
+    for (let i = 0; i < points * 2; i++) {
+    	const r = (i % 2 === 0) ? outerRadius : innerRadius;
+    	const currAngle = (i * angle) - (Math.PI / 2); 
+
+    	const x = cx + Math.cos(currAngle) * r;
+    	const y = cy + Math.sin(currAngle) * r;
+
+    	if (i === 0) {
+    		ctx.moveTo(x, y);
+    	} else {
+    		ctx.lineTo(x, y);
+    	}
+    }
+    ctx.closePath();
+    ctx.fill();
+  }

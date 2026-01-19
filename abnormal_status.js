@@ -16,7 +16,7 @@ AB_STATUS = [
 		apply:(ctx) => {
 			return [false,'Você está mudo e não pode usar cartas ativas'];
 		},
-		offTime:END_TURN_TIME,
+		offTime:END_ATTACK,
 		draw:(x,y,w,h)=>{drawSprite(x,y,ABNORMAL_SPRITES,0,ctx,null,null,w,h)},
 	},
 	{
@@ -52,7 +52,7 @@ function abnormal_off(context, gameTime) {
 	var log = "";
 	abnormal.forEach(p=>{
 		delete context.abnormalStatus[p.name];
-		log += `Estado anormal ${p.name} curado\n`;
+		log += `Estado anormal ${p.name} removido\n`;
 	});
 	return log.replace(/\n+$/, '');
 }
