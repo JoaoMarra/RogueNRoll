@@ -1,18 +1,18 @@
 
+var ACTIVE_SPRITE;
 var ACTIVE;
 var ACTIVE_COLOR;
 function active_drawCard(active, canvas, backCanvas) {
-	return new Promise((result)=> {
+	return new Promise(async (result)=> {
+		ACTIVE_SPRITE = await loadImageSafe('../sprites/actives.png');
+
 		ACTIVE = active[0];
 		ACTIVE_COLOR = active[1];
-		SPRITE = new Image();
-		SPRITE.src = '../sprites/enemies.png';
-		SPRITE.onload = () => {
-			const drawer = new ActiveDrawer();
-			drawer.draw(canvas, backCanvas);
 
-			result();
-		};
+		const drawer = new ActiveDrawer();
+		drawer.draw(canvas, backCanvas);
+
+		result();
 	});
 }
 
@@ -21,7 +21,7 @@ class ActiveDrawer {
 	draw(canvasToDraw,backCanvasToDraw) {
 		ctx = canvasToDraw.getContext("2d");
 		drawBorder(ACTIVE_COLOR);
-		//art
+		drawArt(ACTIVE_SPRITE,ACTIVE.spritePos,PLATE_HEIGHT-20);
 		drawPlate(WIDTH/2-ART_RECT/2,WIDTH/2-ART_RECT/2,ART_RECT,'#C20000','#FE8700');
 		ctx.fillStyle = '#fff';
 		setFontSize(30);

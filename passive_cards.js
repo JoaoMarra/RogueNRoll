@@ -1,3 +1,13 @@
+var PASSIVE_LOADED = false;
+const PASSIVE_SPRITES = new Image();
+PASSIVE_SPRITES.src = "sprites/passives.png"
+PASSIVE_SPRITES.onload = function () {
+	PASSIVE_LOADED = true;
+	try {
+		playGame();
+	} catch(e) {}
+};
+
 const PC_CARDS = [
 	{
 		name:"Sempre +1", time:ROLL_TIME, description: "Adiciona 1 no valor da rolagem no [PÓS ROLAGEM].",
@@ -5,7 +15,8 @@ const PC_CARDS = [
 			const before = ctx.calcValue;
 			const after = context_addValue(ctx,1*amount);
 			return `${before} - ${after}`;
-		} 
+		},
+		spritePos:14
 	},
 	{ 
 		name:"Sempre -1", time:ROLL_TIME, description: "Subtrai 1 do valor da rolagem no [PÓS ROLAGEM].",
@@ -13,7 +24,8 @@ const PC_CARDS = [
 			const before = ctx.calcValue;
 			const after = context_addValue(ctx,-1*amount);
 			return `${before} - ${after}`;
-		},  
+		},
+		spritePos:15 
 	},
 	{ 
 		name:"Par +1", time:ROLL_TIME, description: "Adiciona 1 no valor da rolagem, se o valor da rolagem for par, no [PÓS ROLAGEM].", 
@@ -24,7 +36,8 @@ const PC_CARDS = [
 				after = context_addValue(ctx,1*amount);
 			}
 			return `${before} - ${after}`;
-		}
+		},
+		spritePos:11
 	},
 	{ 
 		name:"Impar +1", time:ROLL_TIME, description: "Adiciona 1 no valor da rolagem, se o valor da rolagem for ímpar, no [PÓS ROLAGEM].", 
@@ -35,7 +48,8 @@ const PC_CARDS = [
 				after = context_addValue(ctx,1*amount);
 			}
 			return `${before} - ${after}`;
-		} 
+		},
+		spritePos:8
 	},
 	{ 
 		name:"Par -1", time:ROLL_TIME, description: "Subtrai 1 do valor da rolagem, se o valor da rolagem for par, no [PÓS ROLAGEM].", 
@@ -46,7 +60,8 @@ const PC_CARDS = [
 				after = context_addValue(ctx,-1*amount);
 			}
 			return `${before} - ${after}`;
-		}
+		},
+		spritePos:12
 	},
 	{ 
 		name:"Impar -1", time:ROLL_TIME, description: "Subtrai 1 do valor da rolagem, se o valor da rolagem for ímpar, no [PÓS ROLAGEM].", 
@@ -57,7 +72,8 @@ const PC_CARDS = [
 				after = context_addValue(ctx,-1*amount);
 			}
 			return `${before} - ${after}`;
-		} 
+		},
+		spritePos:9
 	},
 	{ 
 		name:"Barreira +1", time:ENEMY_TIME, description: "Subtrai 1 do valor do dano dos inimigos na [DEFESA].", 
@@ -65,7 +81,8 @@ const PC_CARDS = [
 			const before = ctx.enemyRoll;
 			const after = context_addEnemyRoll(ctx,-1*amount);
 			return `dano ${before} - ${after}`;
-		} 
+		},
+		spritePos:1
 	},
 	{ 
 		name:"Escudo +1", time:END_ROUND_TIME, description: "Ganha 1 escudo no [FIM DE FASE].", 
@@ -73,7 +90,8 @@ const PC_CARDS = [
 			const before = ctx.shield;
 			const after = context_addShield(ctx,1*amount);
 			return `escudo ${before} - ${after}`;
-		}
+		},
+		spritePos:4
 	},
 	{ 
 		name:"Rouba Alma", time:END_TURN_TIME, description: "Ganha 1 escudo para cada inimigo derrotado no [FIM DE TURNO].", 
@@ -83,7 +101,8 @@ const PC_CARDS = [
 			const before = ctx.shield;
 			const after = context_addShield(ctx,ctx.turnKill*amount);
 			return `escudo ${before} - ${after}`;
-		} 
+		} ,
+		spritePos:13
 	},
 	{ 
 		name:"Level +1", time:END_ROUND_TIME, description: "Ganha 1 nivel extra, no [FIM DE FASE].", 
@@ -91,13 +110,15 @@ const PC_CARDS = [
 			const before = ctx.levelToUp;
 			const after = ctx.levelToUp + 1*amount;
 			return `subir de nivel ${before}x - ${after}x`;
-		}
+		},
+		spritePos:10
 	},
 	{ 
 		name:"Apostar", time:END_TURN_TIME, description: "Descarta uma carta ativa e compra outra no [FIM DE TURNO].", 
 		effect:(ctx,amount) => {
 			return refreshActiveCards(ctx,amount)
-		} 
+		},
+		spritePos:0
 	},
 	{ 
 		name:"Compra Carta", time:END_TURN_TIME, description: "Compra uma carta ativa extra no [FIM DE TURNO].", 
@@ -105,7 +126,8 @@ const PC_CARDS = [
 			let log = context_renewCards(ctx,3+amount,false);
 			positionActiveCards(ctx);
 			return log;
-		} 
+		},
+		spritePos:2
 	},
 	{ 
 		name:"Contra Ataque", time:ROLL_TIME, description: "Caso tenha sido atingido pelos inimigos no turno anterior, o valor da rolagem após aplicação das cartas passivas, fica igual ao inimigo de menor fraqueza disponível.", 
@@ -120,7 +142,8 @@ const PC_CARDS = [
 				return `${before} - ${after}`;	
 			}
 			return 'não tomou dano no turno';
-		} 
+		},
+		spritePos:3
 	},
 	{ 
 		name:"Escudo +Crítico", time:END_TURN_TIME, description: "Ganha 1 escudo para cada inimigo derrotado com ataque crítico neste turno.", 
@@ -130,7 +153,8 @@ const PC_CARDS = [
 			const before = ctx.shield;
 			const after = context_addShield(ctx,ctx.turnCritic*amount);
 			return `escudo ${before} - ${after}`;
-		} 
+		},
+		spritePos:6
 	},
 	{ 
 		name:"Escudo +Carta", time:END_ATTACK, description: "Ganha 1 escudo para cada carta ativa utilizada no ataque deste turno.", 
@@ -140,7 +164,8 @@ const PC_CARDS = [
 				return 'Nenhuma carta usada neste turno';
 			const after = context_addShield(ctx,ctx.playCards.length*amount);
 			return `escudo ${before} - ${after}`;
-		} 
+		},
+		spritePos:5
 	},
 	{
 		name:"Escudo Extra", time:ROLL_TIME, description: "A quantidade de escudos máxima pode ultrapassar em 1 unidade por carta 'Escudo Extra'. No [FIM DE TURNO], a quantidade de escudos que ultrapassarem a quantidade de escudos máxima devem ser descartados.", 
@@ -149,7 +174,8 @@ const PC_CARDS = [
 			ctx.extraShield += amount;
 			const after = before+ctx.extraShield;
 			return `escudo extra ${before} - ${after}`;
-		} 
+		},
+		spritePos:7
 	}
 ]
 

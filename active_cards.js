@@ -1,3 +1,13 @@
+var ACTIVE_LOADED = false;
+const ACTIVE_SPRITES = new Image();
+ACTIVE_SPRITES.src = "sprites/actives.png"
+ACTIVE_SPRITES.onload = function () {
+	ACTIVE_LOADED = true;
+	try {
+		playGame();
+	} catch(e) {}
+};
+
 
 const ACTIVE_WIDTH = 60;
 const ACTIVE_HEIGHT = 80;
@@ -9,7 +19,8 @@ const AC_CARDS = [
 			const before = ctx.calcValue;
 			const after = context_addValue(ctx,1);
 			return `${before} - ${after}`;
-		} 
+		},
+		spritePos:4
 	},
 	{ 
 		name:"+2", description: "Adiciona 2 no valor do ataque.",
@@ -17,7 +28,8 @@ const AC_CARDS = [
 			const before = ctx.calcValue;
 			const after = context_addValue(ctx,2);
 			return `${before} - ${after}`;
-		} 
+		},
+		spritePos:5
 	},
 	{ 
 		name:"-1", description: "Subtrai 1 no valor do ataque.", 
@@ -25,7 +37,8 @@ const AC_CARDS = [
 			const before = ctx.calcValue;
 			const after = context_addValue(ctx,-1);
 			return `${before} - ${after}`;
-		}
+		},
+		spritePos:6
 	},
 	{ 
 		name:"-2", description: "Subtrai 2 no valor do ataque.",
@@ -33,7 +46,8 @@ const AC_CARDS = [
 			const before = ctx.calcValue;
 			const after = context_addValue(ctx,-2);
 			return `${before} - ${after}`;
-		}
+		},
+		spritePos:7
 	},
 	{ 
 		name:"Fixa 3", description: "Muda o valor do ataque para 3.", 
@@ -41,7 +55,8 @@ const AC_CARDS = [
 			const before = ctx.calcValue;
 			const after = context_setValue(ctx, 3);
 			return `${before} - ${after}`;
-		}
+		},
+		spritePos:10
 	},
 	{ 
 		name:"Fixa 1", description: "Muda o valor do ataque para 1.", 
@@ -49,7 +64,8 @@ const AC_CARDS = [
 			const before = ctx.calcValue;
 			const after = context_setValue(ctx, 1);
 			return `${before} - ${after}`;
-		}
+		},
+		spritePos:9
 	},
 	{ 
 		name:"Fixa 6", description: "Muda o valor do ataque para 6.", 
@@ -57,7 +73,8 @@ const AC_CARDS = [
 			const before = ctx.calcValue;
 			const after = context_setValue(ctx, 6);
 			return `${before} - ${after}`;
-		}
+		},
+		spritePos:11
 	},
 	{ 
 		name:"Rouba Vida", description: "Ganha escudo de acordo com o valor do ataque no momento da aplicação da carta.",
@@ -65,33 +82,42 @@ const AC_CARDS = [
 			const before = ctx.shield;
 			const after = context_addShield(ctx,ctx.calcValue);
 			return `escudo ${before} - ${after}`;
-		}
+		},
+		spritePos:8
 	},
 	{
 		name:"Bloqueio Par",description: "Bloqueia os inimigos que tem fraqueza igual a um número par ou que o mínimo e máximo da fraqueza sejam números pares.",
 		effect:(ctx) => {
 			return context_blockEvenEnemies(ctx);
-		}
+		},
+		spritePos:2
 	},
 	{
 		name:"Bloqueio Ímpar",description: "Bloqueia os inimigos que tem fraqueza igual a um número ímpar ou que o mínimo e máximo da fraqueza sejam números pares.",
 		effect:(ctx) => {
 			return context_blockOddEnemies(ctx);
-		}
+		},
+		spritePos:0
 	},
 	{
 		name:"Bloqueio Superior",description: "Bloqueia os inimigos com fraqueza ou mínimo da fraqueza MAIOR que o valor do ataque no momento da aplicação da carta.",
 		effect:(ctx) => {
 			return context_blockGreaterEnemies(ctx);
-		}
+		},
+		spritePos:3
 	},
 	{
 		name:"Bloqueio Inferior",description: "Bloqueia os inimigos com fraqueza ou máximo da fraqueza MENOR que o valor do ataque no momento da aplicação da carta.",
 		effect:(ctx) => {
 			return context_blockLesserEnemies(ctx);
-		}
+		},
+		spritePos:1
 	}
 ]
+
+function drawActiveSprite(ctx,x,y,pos,size) {
+	drawSprite(x,y,ACTIVE_SPRITES,pos,ctx,56,56,size,size);
+}
 
 function newActiveCard(context) {
 	if(context.possibleActive.length == 0)
@@ -136,14 +162,11 @@ const active_draw = (ctx,x,y,card,context) => {
 		ctx.fillRect(cx-3,cy-3,ACTIVE_WIDTH+6,ACTIVE_HEIGHT+6);
 	}
 
-	ctx.font="18px Arial";
 	ctx.fillStyle=card.used?"#555":fColor;
 	ctx.fillRect(cx,cy,ACTIVE_WIDTH,ACTIVE_HEIGHT);
-	ctx.fillStyle="white";
-	const names = card.name.split(" ");
-	names.forEach((name,i)=> {
-		ctx.fillText(name,cx+ACTIVE_WIDTH/2-ctx.measureText(name).width/2,cy+ACTIVE_HEIGHT/2+i*18);
-	});
+
+	const size = 28;
+	drawActiveSprite(ctx,cx+ACTIVE_WIDTH/2-size/2,cy+ACTIVE_HEIGHT/2-size/2,card.spritePos,size);
 }
 
 function active_include(card,context,x,y) {

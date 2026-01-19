@@ -497,13 +497,13 @@
         DESCRIPTION = {
           'x':cx,
           'y':cy,
-          'drawFunc':drawLabelDescription,
-          'label':GAME_CONTEXT.activeCards[c.index].description
+          'drawFunc':drawActiveCardDescription,
+          'card':GAME_CONTEXT.activeCards[c.index]
         };
 
         if(descriptionTimeout != null)
           clearTimeout(descriptionTimeout)
-        descriptionTimeout = setTimeout(clearDescription, DESCRITION_CLEAR_TIME/10*DESCRIPTION.label.split(" ").length);
+        descriptionTimeout = setTimeout(clearDescription, DESCRITION_CLEAR_TIME);
         return;
       }
     }
@@ -792,6 +792,36 @@
 
     if(passiveImage) {
       descriptionCtx.fillStyle="#8800ff";
+      descriptionCtx.fillRect(description.x, description.y+labelImage.height+16, width, passiveImage.height+16);
+      descriptionCtx.drawImage(passiveImage, description.x+8, description.y+labelImage.height+24);
+    }
+  }
+
+  function drawActiveCardDescription(description) {
+    descriptionCtx.clearRect(0,0,descriptionCanvas.width,descriptionCanvas.height);
+    const labelImage = breakText(description.card.name, Math.max(100,canvas.width-description.x), "20px Arial", "#fff");
+    let passiveImage = breakText(description.card.description,Math.max(100,canvas.width-description.x), "16px Arial", "#fff");
+    let width = labelImage.width+16;
+    let height = labelImage.height+16;
+    if(passiveImage != null) {
+      width = Math.max(width, passiveImage.width+16);
+      height += passiveImage.height+36;
+    }
+
+    if(description.x + width > canvas.width) {
+      description.x = canvas.width-width;
+    }
+    if(description.y + height > canvas.height) {
+      description.y = canvas.height - height;
+    }
+
+    descriptionCtx.fillStyle="#000";
+
+    descriptionCtx.fillRect(description.x, description.y, width, labelImage.height+16);
+    descriptionCtx.drawImage(labelImage, description.x+8, description.y+8);
+
+    if(passiveImage) {
+      descriptionCtx.fillStyle="#002aff";
       descriptionCtx.fillRect(description.x, description.y+labelImage.height+16, width, passiveImage.height+16);
       descriptionCtx.drawImage(passiveImage, description.x+8, description.y+labelImage.height+24);
     }

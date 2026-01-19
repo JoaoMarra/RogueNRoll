@@ -22,8 +22,12 @@
 <body style="width: 100%;height: 100vh;">
     <div style="display: flex;width: 100%;height: 100%;">
         <div style="display: flex; flex-direction: column; margin-left: auto; margin-right: auto;">
-            <div id="canvas_div" style="display: flex; margin-top: auto; margin-bottom: auto;flex-wrap: wrap;max-width: 1320px;">
+            <div style="width:66%">
+                <div id="canvas_div" style="display: flex; margin-top: auto; margin-bottom: auto;flex-wrap: wrap;max-width: 800px;">
 
+                </div>
+            </div>
+            <div id="mini_div" style="width:33%">
             </div>
         </div>
     </div>
@@ -31,7 +35,7 @@
 </body>
 <script>
     const WIDTH = 660;
-    const HEIGHT = 1024;
+    const HEIGHT = 1000;
 
     let scaleX,scaleY;
 
@@ -142,7 +146,7 @@
         ctx.beginPath();
         ctx.roundRect(boder, boder, WIDTH-2*boder, HEIGHT-2*boder, 20);
         ctx.fill();
-        ctx.fillStyle = "#fff";
+        ctx.fillStyle = "#222";
         ctx.beginPath();
         ctx.roundRect(2*boder, 2*boder, WIDTH-4*boder, HEIGHT-4*boder, 20);
         ctx.fill();
@@ -223,7 +227,6 @@
 
             append(canvas);
             append(canvasBack);
-            return;
 
             // for(const p of c.passives) {
             //     let canvas = document.createElement('canvas');
@@ -238,19 +241,18 @@
             //     append(canvasBack);
             // }
 
-            // for(const p of c.actives) {
-            //     let canvas = document.createElement('canvas');
-            //     canvas.width = WIDTH/2;
-            //     canvas.height = HEIGHT/2;
-            //     let canvasBack = document.createElement('canvas');
-            //     canvasBack.width = WIDTH/2;
-            //     canvasBack.height = HEIGHT/2;
+            for(const p of c.actives) {
+                let canvas = document.createElement('canvas');
+                canvas.width = WIDTH/2;
+                canvas.height = HEIGHT/2;
+                let canvasBack = document.createElement('canvas');
+                canvasBack.width = WIDTH/2;
+                canvasBack.height = HEIGHT/2;
 
-            //     await mainDraw(canvas, canvasBack, [AC_CARDS[p],c.color], active_drawCard);
-            //     append(canvas);
-            //     append(canvasBack);
-            // }
-            // break;
+                await mainDraw(canvas, canvasBack, [AC_CARDS[p],c.color], active_drawCard);
+                append(canvas);
+                append(canvasBack);
+            }
         }
 
         return;

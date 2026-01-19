@@ -1,18 +1,18 @@
 
+var PASSIVE_SPRITE;
 var PASSIVE;
 var PASSIVE_COLOR;
 function passive_drawCard(passive, canvas, backCanvas) {
-	return new Promise((result)=> {
+	return new Promise(async (result)=> {
+		PASSIVE_SPRITE = await loadImageSafe('../sprites/passives.png');
+
 		PASSIVE = passive[0];
 		PASSIVE_COLOR = passive[1];
-		SPRITE = new Image();
-		SPRITE.src = '../sprites/enemies.png';
-		SPRITE.onload = () => {
-			const drawer = new PassiveDrawer();
-			drawer.draw(canvas, backCanvas);
 
-			result();
-		};
+		const drawer = new PassiveDrawer();
+		drawer.draw(canvas, backCanvas);
+
+		result();
 	});
 }
 
@@ -21,7 +21,7 @@ class PassiveDrawer {
 	draw(canvasToDraw,backCanvasToDraw) {
 		ctx = canvasToDraw.getContext("2d");
 		drawBorder(PASSIVE_COLOR);
-		//art
+		drawArt(PASSIVE_SPRITE,PASSIVE.spritePos,PLATE_HEIGHT-20);
 		drawPlate(WIDTH/2-ART_RECT/2,WIDTH/2-ART_RECT/2,ART_RECT,'#C20000','#FE8700');
 		ctx.fillStyle = '#fff';
 		setFontSize(30);
