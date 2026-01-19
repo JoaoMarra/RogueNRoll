@@ -166,16 +166,16 @@ function context_setCharacters(context, characters) {
 }
 
 function context_levelCharacter(context, char) {
-    char.level += 1;
-    context.maxShield += char.shield;
-    context.shield += char.shield;
-    context.levelSum += 1;
+    char.level += context.levelToUp;
+    context.maxShield += char.shield*context.levelToUp;
+    context.shield += char.shield*context.levelToUp;
+    context.levelSum += context.levelToUp;
 
     context.characters.sort(function(a,b) {
         return b.level - a.level;
     });
 
-    return `${char.name} - Nv${char.level}, +${char.shield} de escudo`;
+    return `${char.name} - Nv${char.level}, +${char.shield*context.levelToUp} de escudo`;
 }
 
 function context_blockEvenEnemies(context) {

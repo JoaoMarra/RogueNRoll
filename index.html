@@ -29,6 +29,14 @@
       </div>
       <div class="common-button" style="margin-top:auto;width: calc(100% - 20px);margin-left: 10px;margin-bottom: 10px;" onclick="confirmCharacters()">Confirmar</div>
     </div>
+    <div id="level_up" class="box-boder" style="position: absolute; top:20px; left: 20px; right: 20px; bottom: 20px;display: none;">
+      <div style="display: flex; align-items: center;">
+        <h1 style="margin-left: auto; margin-right: auto;">Novo nível alcançado!</h1>
+        <div class="common-button" style="margin-right: 10px; padding-left: 10px; padding-right: 10px;" onclick="confirmLevelUp()">Confirmar</div>
+      </div>
+      <div id="level_up_content" style="overflow:scroll;">
+      </div>
+    </div>
   </div>
 </body>
 <script type="text/javascript" src="globals.js"></script>
@@ -66,12 +74,15 @@
 <script type="text/javascript" src="game_context.js"></script>
 <script type="text/javascript" src="menu.js"></script>
 <script type="text/javascript" src="char_select.js"></script>
+<script type="text/javascript" src="levelup.js"></script>
 <script>
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
   const logArea = document.getElementById("log");
   const menu = document.getElementById("menu");
   menu.style.backgroundColor = BACKGROUND_COLOR;
+  const levelup = document.getElementById("level_up");
+  levelup.style.backgroundColor = BACKGROUND_COLOR;
   const descriptionCanvas = document.getElementById("description_canvas");
   const descriptionCtx = descriptionCanvas.getContext("2d");
   const charSelect = document.getElementById("char_select");
@@ -325,20 +336,18 @@
       logs.split("\n").forEach(l=>log(l));
       logs = innate_apply(context, END_ROUND_TIME);
       logs.split("\n").forEach(l=>log(l));
-
-      const char = context.characters[rand(0,context.characters.length-1)];
-      for(let i=0; i < context.levelToUp;i++) {
-        const charLevel = context_levelCharacter(context, char);
-        log(`Subiu de nível: ${charLevel}`);
-        const card = newPassiveCard(context,char.passives);
-        log(`Nova passiva: ${card.name}`);
-      }
     }
 
     logs = abnormal_off(context, END_ROUND_TIME);
     logs.split("\n").forEach(l=>log(l));
-    
-    context_addLevel(context);
+
+    openLevelup(context);
+  }
+
+  function continueNextLevel(logs) {
+    logs.split("\n").forEach(l=>log(l));
+
+    context_addLevel(GAME_CONTEXT);
     startRound();
   }
 

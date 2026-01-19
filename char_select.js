@@ -53,7 +53,7 @@ function charClick(e) {
 
 function fastStart(total=3) {
     for(let v=0; v < total; v++) {
-        SELECTED_CHARS[CHARACTERS[v].name] = CHARACTERS[v];
+        SELECTED_CHARS[CHARACTERS[v+2].name] = CHARACTERS[v+2];
     }
     setTimeout(()=>{
         confirmCharacters()

@@ -228,18 +228,18 @@
             append(canvas);
             append(canvasBack);
 
-            // for(const p of c.passives) {
-            //     let canvas = document.createElement('canvas');
-            //     canvas.width = WIDTH/2;
-            //     canvas.height = HEIGHT/2;
-            //     let canvasBack = document.createElement('canvas');
-            //     canvasBack.width = WIDTH/2;
-            //     canvasBack.height = HEIGHT/2;
+            for(const p of c.passives) {
+                let canvas = document.createElement('canvas');
+                canvas.width = WIDTH/2;
+                canvas.height = HEIGHT/2;
+                let canvasBack = document.createElement('canvas');
+                canvasBack.width = WIDTH/2;
+                canvasBack.height = HEIGHT/2;
 
-            //     await mainDraw(canvas, canvasBack, [PC_CARDS[p],c.color], passive_drawCard);
-            //     append(canvas);
-            //     append(canvasBack);
-            // }
+                await mainDraw(canvas, canvasBack, [PC_CARDS[p],c.color], passive_drawCard);
+                append(canvas);
+                append(canvasBack);
+            }
 
             for(const p of c.actives) {
                 let canvas = document.createElement('canvas');

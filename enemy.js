@@ -156,6 +156,8 @@ function enemy_die(e,context) {
 }
 
 function enemy_draw(ctx,x,y,e,context) {
+	if(e == null)
+		return;
 	let ex = x;
 	let ey = y;
 	if(enemy_die(e,context)) {
