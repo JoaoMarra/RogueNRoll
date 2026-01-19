@@ -51,8 +51,8 @@ function charClick(e) {
     }
 }
 
-function fastStart() {
-    for(let v=0; v < 3; v++) {
+function fastStart(total=3) {
+    for(let v=0; v < total; v++) {
         SELECTED_CHARS[CHARACTERS[v].name] = CHARACTERS[v];
     }
     setTimeout(()=>{

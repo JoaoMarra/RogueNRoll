@@ -6,7 +6,6 @@ const GAME_CONTEXT = {
     extraShield: 0,
     rollValue: null,
     calcValue: null,
-    previewValue: null,
     phase: null,
     passedTurn: false,
     activeCards: [],
@@ -20,14 +19,17 @@ const GAME_CONTEXT = {
     playCards: [],
     characters: [],
     possibleActive: [],
-    levelToUp:1
+    levelToUp:1,
+    abnormalStatus:{},
+    abnormalToApply:{}
 };
+
+var PREVIEW_CONTEXT;
 
 function context_resetTurn(context) {
     context.passedTurn = false;
     context.rollValue=null;
     context.calcValue=null;
-    context.previewValue=null;
     context.lastEnemyRoll=context.enemyRoll;
     context.enemyRoll=null;
     context.playCards = []
@@ -35,7 +37,15 @@ function context_resetTurn(context) {
     context.turnCritic = 0;
     context.extraShield = 0;
     context.shield = Math.min(context.shield, context.maxShield);
+    context.enemies.forEach((e) => {
+        e.block = false;
+    });
+    Object.values(context.abnormalToApply).forEach((a)=>{
+        context.abnormalStatus[a.name] = a;
+    });
+    context.abnormalToApply = {};
     context.phase=GAME_PHASES[0];
+    PREVIEW_CONTEXT = null;
 }
 
 function context_rollDice(context) {
@@ -52,7 +62,7 @@ function context_rollDice(context) {
     random = rand(0,values.length-1);
     context.rollValue = values[random];
     context.calcValue = context.rollValue;
-    context.previewValue = previewTurn(context).calcValue;
+    PREVIEW_CONTEXT = previewTurn(context);
 
     return context.rollValue;
 }
@@ -118,7 +128,7 @@ function context_playCard(context, card) {
     } else {
         context.playCards.push(card)
     }
-    context.previewValue = previewTurn(context).calcValue;
+    PREVIEW_CONTEXT = previewTurn(context);
 }
 
 function context_applyCards(context,use=false) {
@@ -134,7 +144,7 @@ function context_applyCards(context,use=false) {
 }
 
 function previewTurn(context) {
-    const context2 = {...context};
+    const context2 = deepClone(context);
     if(context.calcValue != null) {
         context_applyCards(context2);
     }
@@ -163,4 +173,76 @@ function context_levelCharacter(context, char) {
     });
 
     return `${char.name} - Nv${char.level}, +${char.shield} de escudo`;
+}
+
+function context_blockEvenEnemies(context) {
+    const value = context.calcValue;
+
+    if(value %2 != 0) {
+        return 'Valor de ataque não é par';
+    }
+
+    var log = "";
+    context.enemies.forEach((e)=> {
+        if(e.min %2 == 0 && e.max %2 == 0) {
+            e.block = true;
+            log += `${e.data.name},`;
+        }
+    });
+    if(log.length == 0) {
+        return 'Nenhum inimigo bloqueado';
+    }
+    return log.replace(/,+$/, '');
+}
+
+function context_blockOddEnemies(context) {
+    const value = context.calcValue;
+
+    if(value %2 == 0) {
+        return 'Valor de ataque não é ímpar';
+    }
+
+    var log = "";
+    context.enemies.forEach((e)=> {
+        if(e.min %2 != 0 && e.max %2 != 0) {
+            e.block = true;
+            log += `${e.data.name},`;
+        }
+    });
+    if(log.length == 0) {
+        return 'Nenhum inimigo bloqueado';
+    }
+    return log.replace(/,+$/, '');
+}
+
+function context_blockGreaterEnemies(context) {
+    const value = context.calcValue;
+
+    var log = "";
+    context.enemies.forEach((e)=> {
+        if(e.min > value) {
+            e.block = true;
+            log += `${e.data.name},`;
+        }
+    });
+    if(log.length == 0) {
+        return 'Nenhum inimigo bloqueado';
+    }
+    return log.replace(/,+$/, '');
+}
+
+function context_blockLesserEnemies(context) {
+    const value = context.calcValue;
+
+    var log = "";
+    context.enemies.forEach((e)=> {
+        if(e.max < value) {
+            e.block = true;
+            log += `${e.data.name},`;
+        }
+    });
+    if(log.length == 0) {
+        return 'Nenhum inimigo bloqueado';
+    }
+    return log.replace(/,+$/, '');
 }

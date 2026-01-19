@@ -117,7 +117,11 @@
 
       if (e.shiftKey) {
         for(const item of drawn) {
-          const parts = item.match(/\d+/g).map(Number);
+          console.log(item);
+          const mat = item.match(/\d+/g);
+          if(mat == null)
+            continue;
+          const parts = mat.map(Number);
           if(clickX*ratio >= parts[0] && clickX*ratio <= parts[0]+parts[2]) {
             if(clickY*ratio >= parts[1] && clickY*ratio <= parts[1]+parts[3]) {
               drawn.delete(item);

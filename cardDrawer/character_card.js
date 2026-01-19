@@ -20,6 +20,8 @@ function character_drawCard(char, canvas, backCanvas) {
 	});
 }
 
+const levelMargin = 80;
+const charDescRect = HEIGHT-(ART_HEIGHT+(WIDTH/2-ART_RECT/2))-50-(PLATE_HEIGHT-20);
 class CharDrawer {
 
 	constructor() {
@@ -31,6 +33,7 @@ class CharDrawer {
 		drawBorder(CHARACTER.color);
 		drawArt(SPRITE,CHARACTER.spritePos);
 		this.drawDescription([CHARACTER.description,CHARACTER.can], PC_CARDS[CHARACTER.innate].name, PC_CARDS[CHARACTER.innate].description);
+		this.drawLevel(CHARACTER.shield);
 		this.drawName(CHARACTER.name);
 		this.drawShield(CHARACTER.shield);
 		this.drawDice(CHARACTER.dice);
@@ -39,27 +42,61 @@ class CharDrawer {
 		drawBackBorder(CHARACTER.color);
 	}
 
+	drawLevel(shield) {
+		const h = charDescRect-PLATE_HEIGHT+10;
+		const w = levelMargin-10;
+		ctx.save();
+		ctx.translate(WIDTH/2-ART_RECT/2,WIDTH/2-ART_RECT/2+ART_HEIGHT+10);
+
+		ctx.fillStyle = "#676767";
+		ctx.beginPath();
+		ctx.roundRect(0, 10+PLATE_HEIGHT, w, h, 20);
+		ctx.fill();
+		ctx.strokeStyle = "#0f0";
+		ctx.lineWidth = 4;
+		ctx.beginPath();
+		ctx.roundRect(0, 10+PLATE_HEIGHT, w, h, 20);
+		ctx.stroke();
+
+		const hdelta = h/11;
+
+		setFontSize(20);
+		let label = "Nv.";
+		ctx.fillStyle = "#0f0";
+		ctx.fillText(label,w/2-ctx.measureText(label).width/2,10+PLATE_HEIGHT+hdelta);
+
+		ctx.fillStyle = "#fff";
+		let y = 10+PLATE_HEIGHT+h;
+		for(let is = shield; is <= shield*10; is += shield) {
+			label = is;
+			ctx.fillText(label,w/2-ctx.measureText(label).width/2,y-10);
+			y -= hdelta;
+		}
+
+
+		ctx.restore();
+	}
+
 	drawDescription(description,innateName, innateDescription) {
-		const descRect = HEIGHT-(ART_HEIGHT+(WIDTH/2-ART_RECT/2))-50-(PLATE_HEIGHT-20);
 		ctx.save();
 		ctx.translate(WIDTH/2-ART_RECT/2, WIDTH/2-ART_RECT/2+ART_HEIGHT+10);
 
 		ctx.fillStyle = "#676767";
 		ctx.beginPath();
-		ctx.roundRect(0, 20, ART_RECT, descRect, 20);
+		ctx.roundRect(levelMargin, 20, ART_RECT-levelMargin, charDescRect, 20);
 		ctx.fill();
 		ctx.strokeStyle = "#0f0";
 		ctx.lineWidth = 4;
 		ctx.beginPath();
-		ctx.roundRect(0, 20, ART_RECT, descRect, 20);
+		ctx.roundRect(levelMargin, 20, ART_RECT-levelMargin, charDescRect, 20);
 		ctx.stroke();
 
 		const margin = 20;
-		ctx.translate(0, 20+(PLATE_HEIGHT-20));
+		ctx.translate(levelMargin, 20+(PLATE_HEIGHT-20));
 		const sX = margin;
 		const sY = margin;
-		const wW = ART_RECT-2*sX;
-		const wH = descRect-20-(PLATE_HEIGHT-20)-sY*2;
+		const wW = ART_RECT-2*sX-levelMargin;
+		const wH = charDescRect-20-(PLATE_HEIGHT-20)-sY*2;
 
 		const textSize = 20;
 		setFontSize(textSize);
@@ -81,10 +118,10 @@ class CharDrawer {
 			y += textSize+8;
 		}
 
-		const plateW = ART_RECT-100;
+		const plateW = ART_RECT-100-levelMargin;
 		drawPlate(50, y+margin, plateW, "#cd7f32", "#a46628");
 		let text = innateName;
-		ctx.fillText(text,ART_RECT/2-ctx.measureText(text).width/2,y+margin+PLATE_HEIGHT/2+textSize/2);
+		ctx.fillText(text,(ART_RECT-levelMargin)/2-ctx.measureText(text).width/2,y+margin+PLATE_HEIGHT/2+textSize/2);
 		x = sX;
 		y = y+margin+PLATE_HEIGHT+20;
 		for(text of innateDescription.split(" ")) {

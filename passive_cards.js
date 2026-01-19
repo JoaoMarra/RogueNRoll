@@ -178,8 +178,7 @@ function passive_apply(context, gameTime) {
 		let effect = p.effect(context,p.amount);
 		log += `Passiva ${p.name} ${p.amount}x: ${effect}\n`;
 	});
-	
-	context.previewValue = previewTurn(context).calcValue;
+
 	return log.replace(/\n+$/, '');
 }
 
@@ -194,6 +193,5 @@ function innate_apply(context, gameTime) {
 		}
 	});
 	
-	context.previewValue = previewTurn(context).calcValue;
 	return log.replace(/\n+$/, '');
 }

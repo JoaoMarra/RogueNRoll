@@ -60,13 +60,37 @@ const AC_CARDS = [
 		}
 	},
 	{ 
-		name:"Rouba Vida", description: "Ganha escudo de acordo com o valor do ataque.",
+		name:"Rouba Vida", description: "Ganha escudo de acordo com o valor do ataque no momento da aplicação da carta.",
 		effect:(ctx) => {
 			const before = ctx.shield;
 			const after = context_addShield(ctx,ctx.calcValue);
 			return `escudo ${before} - ${after}`;
 		}
 	},
+	{
+		name:"Bloqueio Par",description: "Caso o valor do ataque no momento da aplicação da carta seja par, bloqueia os inimigos que tem fraqueza igual a um número par ou que o mínimo e máximo da fraqueza sejam números pares.",
+		effect:(ctx) => {
+			return context_blockEvenEnemies(ctx);
+		}
+	},
+	{
+		name:"Bloqueio Ímpar",description: "Caso o valor do ataque no momento da aplicação da carta seja ímpar, bloqueia os inimigos que tem fraqueza igual a um número ímpar ou que o mínimo e máximo da fraqueza sejam números pares.",
+		effect:(ctx) => {
+			return context_blockOddEnemies(ctx);
+		}
+	},
+	{
+		name:"Bloqueio Superior",description: "Bloqueia os inimigos com fraqueza ou mínimo da fraqueza MAIOR que o valor do ataque no momento da aplicação da carta.",
+		effect:(ctx) => {
+			return context_blockGreaterEnemies(ctx);
+		}
+	},
+	{
+		name:"Bloqueio Inferior",description: "Bloqueia os inimigos com fraqueza ou máximo da fraqueza MENOR que o valor do ataque no momento da aplicação da carta.",
+		effect:(ctx) => {
+			return context_blockLesserEnemies(ctx);
+		}
+	}
 ]
 
 function newActiveCard(context) {

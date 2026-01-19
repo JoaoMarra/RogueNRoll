@@ -141,6 +141,7 @@ function menu_includes(context, cx, cy) {
 			return {
 				'x':cx,
 				'y':cy,
+				'drawFunc':drawLabelDescription,
 				'label':c.description
 			}
 			break;

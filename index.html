@@ -40,7 +40,7 @@
   const BACKGROUND_COLOR = '#222'
 
 
-  const drawSprite = (x,y,sheet,i,dCtx=ctx,cutW=null,cutH=null)=>{
+  const drawSprite = (x,y,sheet,i,dCtx=ctx,cutW=null,cutH=null,resW=null,resH=null)=>{
     const size = sheet.height; 
     if(cutW == null) {
       cutW = size;
@@ -48,7 +48,13 @@
     if(cutH == null) {
       cutH = size;
     }
-    dCtx.drawImage(sheet,i*size,0,cutW,cutH,x,y,cutW,cutH);
+    if(resW == null) {
+      resW = cutW;
+    }
+    if(resH == null) {
+      resH = cutH;
+    }
+    dCtx.drawImage(sheet,i*size,0,cutW,cutH,x,y,resW,resH);
   }
 </script>
 <script type="text/javascript" src="dice.js"></script>
@@ -56,6 +62,7 @@
 <script type="text/javascript" src="characters.js"></script>
 <script type="text/javascript" src="active_cards.js"></script>
 <script type="text/javascript" src="passive_cards.js"></script>
+<script type="text/javascript" src="abnormal_status.js"></script>
 <script type="text/javascript" src="game_context.js"></script>
 <script type="text/javascript" src="menu.js"></script>
 <script type="text/javascript" src="char_select.js"></script>
@@ -154,19 +161,22 @@
 /* ================== ENEMIES ================== */
 
   function newEnemy() {
+    // let a=rand(1,5), b=rand(a+1,a+3);
+    // return {min:a,max:Math.min(b,6),hp:1,data:ENEMIES[t],block:false,effect:1};
     if (Math.random()<0.5) {
       const v=rand(1,6);
-      return {min:v,max:v,hp:1,data:ENEMIES[rand(0,ENEMIES.length-1)]};
+      return {min:v,max:v,hp:1,data:ENEMIES[rand(0,ENEMIES.length-1)],block:false,effect:1};
     }
     let a=rand(1,5), b=rand(a+1,a+3);
-    return {min:a,max:Math.min(b,6),hp:1,data:ENEMIES[rand(0,ENEMIES.length-1)]};
+    return {min:a,max:Math.min(b,6),hp:1,data:ENEMIES[rand(0,ENEMIES.length-1)],block:false,effect:1};
   }
 
   function spawnEnemies(context) {
     context.enemies=[];
     let amount = rand(context.level,4+context.level)
-    for(let i=0;i<amount;i++)
+    for(let i=0;i<amount;i++) {
       context.enemies.push(newEnemy());
+    }
     log("Inimigos gerados:", context.enemies.length);
   }
 
@@ -203,7 +213,7 @@
       ENEMY_POS.push({
         'x':ex,
         'y':ey,
-        'enemy':e
+        'enemy':i
       });
     });
   }
@@ -225,7 +235,14 @@
 
 /* ================== GAME LOGIC ================== */
   function rollPlayer(context) {
-    let value = context_rollDice(context);
+    let value = abnormal_apply(context, ROLL_TIME);
+    value[1].split("\n").forEach(l=>log(l));
+    if(value[0] == false) {
+      enemyAttack(context);
+      return;
+    }
+
+    value = context_rollDice(context);
 
     log(`Jogador rolou: ${value}`);
 
@@ -233,6 +250,8 @@
     value.split("\n").forEach(l=>log(l));
     value = innate_apply(context, ROLL_TIME);
     value.split("\n").forEach(l=>log(l));
+
+    PREVIEW_CONTEXT = previewTurn(context);
 
     context.phase=GAME_PHASES[1];
   }
@@ -252,7 +271,7 @@
     let killed=false;
 
     context.enemies.forEach(e=>{
-      if(enemy_die(e,diceValue)) {
+      if(enemy_die(e,context)) {
         e.hp=0;
         killed=true;
         context.turnKill += 1;
@@ -273,10 +292,14 @@
 
     context.enemies = context.enemies.filter(e=>e.hp>0);
 
-    logs = passive_apply(context, END_ATTACK);
-    logs.split("\n").forEach(l=>log(l));
-    logs = innate_apply(context, END_ATTACK);
-    logs.split("\n").forEach(l=>log(l));
+    logs = abnormal_apply(context, END_ATTACK);
+    logs[1].split("\n").forEach(l=>log(l));
+    if(logs[0]) {
+      logs = passive_apply(context, END_ATTACK);
+      logs.split("\n").forEach(l=>log(l));
+      logs = innate_apply(context, END_ATTACK);
+      logs.split("\n").forEach(l=>log(l));
+    }
 
     if(killed) {
       endTurn(context);
@@ -291,41 +314,72 @@
   }
 
   function nextLevel(context) {
-    logs = passive_apply(context, END_ROUND_TIME);
-    logs.split("\n").forEach(l=>log(l));
-    logs = innate_apply(context, END_ROUND_TIME);
-    logs.split("\n").forEach(l=>log(l));
+    let logs = abnormal_apply(context, END_ROUND_TIME);
+    logs[1].split("\n").forEach(l=>log(l));
 
-    const char = context.characters[rand(0,context.characters.length-1)];
-    for(let i=0; i < context.levelToUp;i++) {
-      const charLevel = context_levelCharacter(context, char);
-      log(`Subiu de nível: ${charLevel}`);
-      const card = newPassiveCard(context,char.passives);
-      log(`Nova passiva: ${card.name}`);
+    if(logs[0]) {
+      logs = passive_apply(context, END_ROUND_TIME);
+      logs.split("\n").forEach(l=>log(l));
+      logs = innate_apply(context, END_ROUND_TIME);
+      logs.split("\n").forEach(l=>log(l));
+
+      const char = context.characters[rand(0,context.characters.length-1)];
+      for(let i=0; i < context.levelToUp;i++) {
+        const charLevel = context_levelCharacter(context, char);
+        log(`Subiu de nível: ${charLevel}`);
+        const card = newPassiveCard(context,char.passives);
+        log(`Nova passiva: ${card.name}`);
+      }
     }
+
+    logs = abnormal_off(context, END_ROUND_TIME);
+    logs.split("\n").forEach(l=>log(l));
     
     context_addLevel(context);
     startRound();
   }
 
   function enemyAttack(context) {
-    context.phase = GAME_PHASES[2]
+    context.phase = GAME_PHASES[2];
 
+    const capableEnemies = context.enemies.filter((e)=>e.block==false);
+
+    if(capableEnemies.length == 0) {
+      log('Inimigos bloqueados');
+      if(context.passedTurn) {
+        const cards = context_renewCards(context,3);
+        log(`Nova carta ativa: ${cards}`);
+        positionActiveCards(context);
+      }
+      endTurn(context);
+      return;
+    }
+
+    const totalEffect = capableEnemies.reduce((accumulator, ene) => {
+      return accumulator + ene.effect;
+    }, 0);
     const minDamage = context.level;
-    const maxDamage = context.enemies.length * context.level;
+    const maxDamage = totalEffect * context.level;
 
-    context.enemyRoll = rand(minDamage, maxDamage);
+    context.enemyRoll = maxDamage;//rand(minDamage, maxDamage);
 
-    logs = passive_apply(context, ENEMY_TIME);
-    logs.split("\n").forEach(l=>log(l));
-    logs = innate_apply(context, ENEMY_TIME);
-    logs.split("\n").forEach(l=>log(l));
+    let logs = abnormal_apply(context, ENEMY_TIME);
+    logs[1].split("\n").forEach(l=>log(l));
+    if(logs[0]) {
+      logs = passive_apply(context, ENEMY_TIME);
+      logs.split("\n").forEach(l=>log(l));
+      logs = innate_apply(context, ENEMY_TIME);
+      logs.split("\n").forEach(l=>log(l));
+    }
   }
 
   function resolveEnemyTurn(context) {
     const before = context.shield;
     const after = context_addShield(context,-context.enemyRoll);
     log(`Inimigo atacou com ${context.enemyRoll}: escudo ${before} - ${after}`);
+
+    let logs = enemy_pasive_apply(context,context.enemyRoll);
+    logs.split("\n").forEach(l=>log(l));
 
     if(after<=0) {
       log("GAME OVER");
@@ -341,9 +395,16 @@
   }
 
   function endTurn(context) {
-    logs = passive_apply(context, END_TURN_TIME);
-    logs.split("\n").forEach(l=>log(l));
-    logs = innate_apply(context, END_TURN_TIME);
+    let logs = abnormal_apply(context, END_TURN_TIME);
+    logs[1].split("\n").forEach(l=>log(l));
+    if(logs[0]) {
+      logs = passive_apply(context, END_TURN_TIME);
+      logs.split("\n").forEach(l=>log(l));
+      logs = innate_apply(context, END_TURN_TIME);
+      logs.split("\n").forEach(l=>log(l));
+    }
+
+    logs = abnormal_off(context, END_TURN_TIME);
     logs.split("\n").forEach(l=>log(l));
     context_resetTurn(context);
   }
@@ -367,11 +428,15 @@
     }
 
     if(GAME_CONTEXT.phase.name === "decision") {
-      for(const c of ACTIVE_POS) {
-        const card = GAME_CONTEXT.activeCards[c.index];
-        if(!card.used && active_include(c,GAME_CONTEXT,x,y)) {
-          context_playCard(GAME_CONTEXT, card);
-          break;
+      let logs = abnormal_apply(GAME_CONTEXT, DECISION_TIME);
+      logs[1].split("\n").forEach(l=>log(l));
+      if(logs[0]) {
+        for(const c of ACTIVE_POS) {
+          const card = GAME_CONTEXT.activeCards[c.index];
+          if(!card.used && active_include(c,GAME_CONTEXT,x,y)) {
+            context_playCard(GAME_CONTEXT, card);
+            break;
+          }
         }
       }
     }
@@ -394,12 +459,18 @@
       return;
     }
 
+    let enemyList = GAME_CONTEXT.enemies;
+    if(PREVIEW_CONTEXT != null) {
+      enemyList = PREVIEW_CONTEXT.enemies;
+    }
+
     for(const e of ENEMY_POS) {
-      if(enemy_includes(e,GAME_CONTEXT.previewValue,cx,cy)) {
+      if(enemy_includes(PREVIEW_CONTEXT?PREVIEW_CONTEXT:GAME_CONTEXT,e,cx,cy)) {
         DESCRIPTION = {
           'x':cx,
           'y':cy,
-          'label':e.enemy.data.name
+          'drawFunc':drawEnemyDescription,
+          'enemy':enemyList[e.enemy].data
         };
         if(descriptionTimeout != null)
           clearTimeout(descriptionTimeout)
@@ -413,14 +484,35 @@
         DESCRIPTION = {
           'x':cx,
           'y':cy,
+          'drawFunc':drawLabelDescription,
           'label':GAME_CONTEXT.activeCards[c.index].description
         };
 
         if(descriptionTimeout != null)
           clearTimeout(descriptionTimeout)
-        descriptionTimeout = setTimeout(clearDescription, DESCRITION_CLEAR_TIME);
+        descriptionTimeout = setTimeout(clearDescription, DESCRITION_CLEAR_TIME/10*DESCRIPTION.label.split(" ").length);
         return;
       }
+    }
+
+    const abSize = 28;
+    let lx = canvas.width-abSize;
+    let ly = canvas.height-BUTTON_H_SCALED-abSize
+    for(const ab of Object.values(GAME_CONTEXT.abnormalStatus)) {
+      if(cx > lx && cx < lx+abSize && cy > ly && cy < ly+abSize ) {
+        DESCRIPTION = {
+          'x':cx,
+          'y':cy,
+          'drawFunc':drawAbnormalDescription,
+          'abnormal':ab
+        };
+
+        if(descriptionTimeout != null)
+          clearTimeout(descriptionTimeout)
+        descriptionTimeout = setTimeout(clearDescription, DESCRITION_CLEAR_TIME/10*ab.description.split(" ").length);
+        return;
+      }
+      lx -= abSize;
     }
   });
   descriptionCanvas.addEventListener("click", function(e) {
@@ -483,9 +575,14 @@
     ctx.fillRect(0,0,canvas.width,canvas.height);
     let label;
 
+    let contextToUse = GAME_CONTEXT;
+    if(PREVIEW_CONTEXT != null) {
+      contextToUse = PREVIEW_CONTEXT;
+    }
+
   // Enemies
     ENEMY_POS.forEach(e=>{
-      enemy_draw(ctx,e.x,e.y,e.enemy,GAME_CONTEXT.previewValue);
+      enemy_draw(ctx,e.x,e.y,contextToUse.enemies[e.enemy],contextToUse);
     });
 
   // Active cards
@@ -500,7 +597,7 @@
     ctx.arc(canvas.width/2, canvas.height-50-BUTTON_H_SCALED, 25, 0, 2 * Math.PI);
     ctx.fill();
 
-    drawDice(DICE, ctx, GAME_CONTEXT.previewValue, delta, canvas.width/2, canvas.height-BUTTON_H_SCALED);
+    drawDice(DICE, ctx, contextToUse.calcValue, delta, canvas.width/2, canvas.height-BUTTON_H_SCALED);
 
     if(GAME_CONTEXT.rollValue) {
       ctx.font="18px Arial";
@@ -511,8 +608,8 @@
 
   // LIFE
     const size = 35;
-    const lx = 10+size+size/2;
-    const ly = canvas.height-size*1.5;
+    let lx = 10+size+size/2;
+    let ly = canvas.height-size*1.5;
     ctx.fillStyle = "red"
     ctx.beginPath();
     ctx.arc(lx-size/2, ly, size, 0, 2 * Math.PI);
@@ -541,21 +638,27 @@
     shieldLabel="escudo";
     ctx.fillText(shieldLabel,lx-ctx.measureText(shieldLabel).width/2,ly+30);
 
-    ctx.font="20px Arial";
-    if(VERTICAL)
-      ctx.fillText(`Fase ${GAME_CONTEXT.level}`,canvas.width-100,canvas.height-BUTTON_H_SCALED - 8);
-    else
-      ctx.fillText(`Fase ${GAME_CONTEXT.level}`,lx+size*2+10,ly+12);
+  // ABNORMAL
+
+    const abSize = 28;
+    lx = canvas.width-abSize;
+    ly = canvas.height-BUTTON_H_SCALED-abSize
+    Object.values(GAME_CONTEXT.abnormalStatus).forEach((ab,i)=>{
+      ab.draw(lx-i*abSize,ly,abSize,abSize);
+    });
 
   // Phase label
+    ctx.font="20px Arial";
+    label = `[FASE ${GAME_CONTEXT.level}]`;
+    ctx.fillText(label,canvas.width/2 - ctx.measureText(label).width/2,40);
     ctx.font="22px Arial";
     ctx.fillStyle="#f5f5f5";
     label=GAME_CONTEXT.phase.desc;
-    ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, 40);
+    ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, 60);
     ctx.font="18px Arial";
     ctx.fillStyle="#faefb6";
     label=SCORE;
-    ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, 62);
+    ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, 82);
 
   // BUTTONS
     for(let btn of BUTTONS) {
@@ -575,38 +678,7 @@
 
   // DESCRIPTION
     if(DESCRIPTION != null) {
-      descriptionCtx.clearRect(0,0,descriptionCanvas.width,descriptionCanvas.height);
-      descriptionCtx.font="20px Arial";
-      const dsize = descriptionCtx.measureText(DESCRIPTION.label).width+8;
-      let rwidth = Math.min(canvas.width-DESCRIPTION.x,dsize);
-      if(rwidth != dsize && rwidth < canvas.width/2) {
-        rwidth = canvas.width/2;
-        DESCRIPTION.x = canvas.width-rwidth;
-      }
-      const spaceSize = descriptionCtx.measureText(" ").width;
-      let rheight = 30;
-      if(rwidth < dsize) {
-        rheight = Math.ceil(dsize/rwidth)*30;
-      }
-      descriptionCtx.fillStyle="#000";
-
-      descriptionCtx.fillRect(DESCRIPTION.x, DESCRIPTION.y, rwidth, rheight);
-      descriptionCtx.fillStyle="#fff";
-      const labels = DESCRIPTION.label.split(" ");
-      let x = DESCRIPTION.x+4;
-      let y = DESCRIPTION.y;
-      labels.forEach((label,i)=> {
-        if(x + descriptionCtx.measureText(label).width > canvas.width) {
-          x = DESCRIPTION.x+4;
-          y += 30;
-        }
-        descriptionCtx.fillText(label,x, y+20);
-        x += descriptionCtx.measureText(label).width+spaceSize;
-        if(x > canvas.width) {
-          x = DESCRIPTION.x+4;
-          y += 30;
-        }
-      });
+      DESCRIPTION.drawFunc(DESCRIPTION);
     } else {
       descriptionCtx.clearRect(0,0,descriptionCanvas.width,descriptionCanvas.height);
     }
@@ -626,10 +698,90 @@
     ctx.fillStyle="white";
     ctx.font="16px Arial";
     const label=btn.name(GAME_CONTEXT);
-    const labels = btn.name(GAME_CONTEXT).split(" ");
-    labels.forEach((label,i)=> {
-      ctx.fillText(label,scaledX + scaledW/2 - ctx.measureText(label).width/2, scaledY + scaledH/2 + i*18 + 8);
-    });
+    ctx.fillText(label,scaledX + scaledW/2 - ctx.measureText(label).width/2, scaledY + scaledH/2 + 8);
+  }
+
+  function drawLabelDescription(description) {
+    descriptionCtx.clearRect(0,0,descriptionCanvas.width,descriptionCanvas.height);
+    const labelImage = breakText(description.label, Math.max(100,canvas.width-description.x), "20px Arial", "#fff");
+
+    if(description.x + labelImage.width+16 > canvas.width) {
+      description.x = canvas.width-labelImage.width-16;
+    }
+    if(description.y + labelImage.height+16 > canvas.height) {
+      description.y = canvas.height - labelImage.height-16;
+    }
+
+    descriptionCtx.fillStyle="#000";
+    descriptionCtx.fillRect(description.x, description.y, labelImage.width+16, labelImage.height+16);
+
+    descriptionCtx.drawImage(labelImage, description.x+8, description.y+8);
+  }
+
+  function drawEnemyDescription(description) {
+    descriptionCtx.clearRect(0,0,descriptionCanvas.width,descriptionCanvas.height);
+    const labelImage = breakText(description.enemy.name, Math.max(100,canvas.width-description.x), "20px Arial", "#fff");
+    let passiveImage;
+    if(description.enemy.passive != null) {
+      passiveImage = breakText(ENEMIES_PASSIVE[description.enemy.passive].description,Math.max(100,canvas.width-description.x), "16px Arial", "#fff");
+    }
+    let width = labelImage.width+16;
+    let height = labelImage.height+16;
+    if(passiveImage != null) {
+      width = Math.max(width, passiveImage.width+16);
+      height += passiveImage.height+36;
+    }
+
+    if(description.x + width > canvas.width) {
+      description.x = canvas.width-width;
+    }
+    if(description.y + height > canvas.height) {
+      description.y = canvas.height - height;
+    }
+
+    descriptionCtx.fillStyle="#000";
+
+    descriptionCtx.fillRect(description.x, description.y, width, labelImage.height+16);
+    descriptionCtx.drawImage(labelImage, description.x+8, description.y+8);
+
+    if(passiveImage) {
+      descriptionCtx.fillStyle="#a03";
+      descriptionCtx.fillRect(description.x, description.y+labelImage.height+16, width, passiveImage.height+36);
+      descriptionCtx.font = "20px Arial"
+      descriptionCtx.fillStyle="#fff";
+      descriptionCtx.fillText(`[${ENEMIES_PASSIVE[description.enemy.passive].name}]`,description.x+8,description.y+labelImage.height+34);
+      descriptionCtx.drawImage(passiveImage, description.x+8, description.y+labelImage.height+44);
+    }
+  }
+
+  function drawAbnormalDescription(description) {
+    descriptionCtx.clearRect(0,0,descriptionCanvas.width,descriptionCanvas.height);
+    const labelImage = breakText(description.abnormal.name, Math.max(100,canvas.width-description.x), "20px Arial", "#fff");
+    let passiveImage = breakText(description.abnormal.description,Math.max(100,canvas.width-description.x), "16px Arial", "#fff");
+    let width = labelImage.width+16;
+    let height = labelImage.height+16;
+    if(passiveImage != null) {
+      width = Math.max(width, passiveImage.width+16);
+      height += passiveImage.height+36;
+    }
+
+    if(description.x + width > canvas.width) {
+      description.x = canvas.width-width;
+    }
+    if(description.y + height > canvas.height) {
+      description.y = canvas.height - height;
+    }
+
+    descriptionCtx.fillStyle="#000";
+
+    descriptionCtx.fillRect(description.x, description.y, width, labelImage.height+16);
+    descriptionCtx.drawImage(labelImage, description.x+8, description.y+8);
+
+    if(passiveImage) {
+      descriptionCtx.fillStyle="#8800ff";
+      descriptionCtx.fillRect(description.x, description.y+labelImage.height+16, width, passiveImage.height+16);
+      descriptionCtx.drawImage(passiveImage, description.x+8, description.y+labelImage.height+24);
+    }
   }
 
   var lastTime = null;
@@ -652,12 +804,12 @@
 </script>
 <script>
   function playGame() {
-    if(!ENEMY_LOADED || !CHARACTERS_LOADED) {
+    if(!ENEMY_LOADED || !CHARACTERS_LOADED  || !ABNORMAL_LOADED) {
       return;
     }
   }
 
-  if(ENEMY_LOADED && CHARACTERS_LOADED) {
+  if(ENEMY_LOADED && CHARACTERS_LOADED && ABNORMAL_LOADED) {
     playGame();
   }
 
