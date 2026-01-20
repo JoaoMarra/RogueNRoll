@@ -92,7 +92,7 @@ const PC_CARDS = [
 		sprite:'p_barreira1.png'
 	},
 	{ 
-		name:"Escudo +1", time:END_ROUND_TIME, description: "Ganha 1 escudo no [FIM DE FASE].", 
+		name:"Escudo +1", time:END_TURN_TIME, description: "Ganha 1 escudo no [FIM DE TURNO].", 
 		effect:(ctx, amount) => {
 			const before = ctx.shield;
 			const after = context_addShield(ctx,1*amount);
