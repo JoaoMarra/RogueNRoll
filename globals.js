@@ -24,17 +24,17 @@ const rand = (a,b)=>{
 };
 
 function deepClone(obj) {
-  if (obj === null || typeof obj !== 'object') return obj;
+	if (obj === null || typeof obj !== 'object') return obj;
 
-  if (Array.isArray(obj)) {
-    return obj.map(item => deepClone(item));
-  }
+	if (Array.isArray(obj)) {
+		return obj.map(item => deepClone(item));
+	}
 
-  const clone = {};
-  for (const key in obj) {
-    clone[key] = deepClone(obj[key]);
-  }
-  return clone;
+	const clone = {};
+	for (const key in obj) {
+		clone[key] = deepClone(obj[key]);
+	}
+	return clone;
 }
 
 
@@ -74,22 +74,33 @@ function breakText(text, width, font, color) {
 
 function drawStar(ctx, cx, cy, outerRadius,innerRadius) {
 	const points = 5;
-    const angle = Math.PI / points;
-    
-    ctx.beginPath();
-    for (let i = 0; i < points * 2; i++) {
-    	const r = (i % 2 === 0) ? outerRadius : innerRadius;
-    	const currAngle = (i * angle) - (Math.PI / 2); 
+	const angle = Math.PI / points;
 
-    	const x = cx + Math.cos(currAngle) * r;
-    	const y = cy + Math.sin(currAngle) * r;
+	ctx.beginPath();
+	for (let i = 0; i < points * 2; i++) {
+		const r = (i % 2 === 0) ? outerRadius : innerRadius;
+		const currAngle = (i * angle) - (Math.PI / 2); 
 
-    	if (i === 0) {
-    		ctx.moveTo(x, y);
-    	} else {
-    		ctx.lineTo(x, y);
-    	}
-    }
-    ctx.closePath();
-    ctx.fill();
-  }
+		const x = cx + Math.cos(currAngle) * r;
+		const y = cy + Math.sin(currAngle) * r;
+
+		if (i === 0) {
+			ctx.moveTo(x, y);
+		} else {
+			ctx.lineTo(x, y);
+		}
+	}
+	ctx.closePath();
+	ctx.fill();
+}
+
+function shuffle(array) {
+	let currentIndex = array.length;
+
+	while (currentIndex != 0) {
+		let randomIndex = Math.floor(Math.random() * currentIndex);
+		currentIndex--;
+
+		[array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+	}
+}

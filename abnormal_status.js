@@ -17,7 +17,7 @@ AB_STATUS = [
 			return [false,'Você está mudo e não pode usar cartas ativas'];
 		},
 		offTime:END_ATTACK,
-		draw:(x,y,w,h)=>{drawSprite(x,y,ABNORMAL_SPRITES,0,ctx,null,null,w,h)},
+		draw:(x,y,w,h)=>{drawSprite(x,y,ABNORMAL_SPRITES,1,ctx,null,null,w,h)},
 	},
 	{
 		name:"Veneno",
@@ -29,7 +29,7 @@ AB_STATUS = [
 			return [true,`escudo ${before} - ${after}`];
 		},
 		offTime:END_ROUND_TIME,
-		draw:(x,y,w,h)=>{drawSprite(x,y,ABNORMAL_SPRITES,1,ctx,null,null,w,h)},
+		draw:(x,y,w,h)=>{drawSprite(x,y,ABNORMAL_SPRITES,2,ctx,null,null,w,h)},
 	},
 ]
 

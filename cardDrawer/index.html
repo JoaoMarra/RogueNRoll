@@ -21,9 +21,9 @@
 </head>
 <body style="width: 100%;height: 100vh;">
     <div style="display: flex;width: 100%;height: 100%;">
-        <div style="display: flex; flex-direction: column; margin-left: auto; margin-right: auto;">
+        <div style="display: flex; margin-left: auto; margin-right: auto; width: 1100px;">
             <div style="width:66%">
-                <div id="canvas_div" style="display: flex; margin-top: auto; margin-bottom: auto;flex-wrap: wrap;max-width: 800px;">
+                <div id="canvas_div" style="display: flex; margin-top: auto; margin-bottom: auto;flex-wrap: wrap;width: 660px;">
 
                 </div>
             </div>
@@ -62,11 +62,11 @@
         return img;
     }
 
-    function setFontSize(size) {
-        ctx.font = `${size*1.8}px pixel`;
+    function setFontSize(size, dCtx = ctx) {
+        dCtx.font = `${size*1.8}px pixel`;
     }
 
-    const drawSprite = (x,y,sheet,i,scaleX=null,scaleY=null)=>{
+    const drawSprite = (x,y,sheet,i,scaleX=null,scaleY=null,dCtx=ctx)=>{
         const size = sheet.height;
         if(scaleX == null) {
             scaleX = size;
@@ -74,7 +74,7 @@
         if(scaleY == null) {
             scaleY = size;
         }
-        ctx.drawImage(sheet,i*size,0,size,size,x,y,scaleX,scaleY);
+        dCtx.drawImage(sheet,i*size,0,size,size,x,y,scaleX,scaleY);
     }
 
     const PLATE_HEIGHT = 60;
@@ -197,9 +197,15 @@
 <script type="text/javascript" src="enemy_card.js"></script>
 <script type="text/javascript" src="passive_card_drawer.js"></script>
 <script type="text/javascript" src="active_card_drawer.js"></script>
+<script type="text/javascript" src="tags_drawer.js"></script>
+<script type="text/javascript" src="adventurer_tag_drawer.js"></script>
 <script>
 
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+
     const canvasDiv = document.getElementById("canvas_div");
+    const miniDIv = document.getElementById("mini_div");
 
     function append(canvas) {
         const image = document.createElement('img');
@@ -208,103 +214,183 @@
         image.onload = () => {
             image.style.width = image.naturalWidth * 0.70 + "px";
         };
+        image.style.marginBottom = '10px';
         canvasDiv.appendChild(image);
+    }
+
+    function appendTag(canvas) {
+        const image = document.createElement('img');
+        image.src = canvas.toDataURL('image/png');
+        image.addEventListener('click',savePNG);
+        image.onload = () => {
+            image.style.width = image.naturalWidth * 0.70 + "px";
+        };
+        miniDIv.appendChild(image);
     }
 
     const FONT = new FontFace('pixel', 'url(../pixel.ttf)');
     FONT.load().then(async (font) => {
         document.fonts.add(font);
 
-        for(const c of CHARACTERS) {
-            let canvas = document.createElement('canvas');
-            canvas.width = WIDTH/2;
-            canvas.height = HEIGHT/2;
-            let canvasBack = document.createElement('canvas');
-            canvasBack.width = WIDTH/2;
-            canvasBack.height = HEIGHT/2;
+        if(urlParams.size == 0 || urlParams.get('characters') == 1) {
+            for(const c of CHARACTERS) {
+                let canvas = document.createElement('canvas');
+                canvas.width = WIDTH/2;
+                canvas.height = HEIGHT/2;
+                let canvasBack = document.createElement('canvas');
+                canvasBack.width = WIDTH/2;
+                canvasBack.height = HEIGHT/2;
 
-            await mainDraw(canvas, canvasBack, c, character_drawCard);
+                await mainDraw(canvas, canvasBack, c, character_drawCard);
 
-            append(canvas);
-            append(canvasBack);
+                append(canvas);
+                append(canvasBack);
 
-            let index = 0;
-            for(const p of c.passives) {
-                for(let i = 0; i < c.passiveProportion[index]; i++) {
-                    let canvas = document.createElement('canvas');
-                    canvas.width = WIDTH/2;
-                    canvas.height = HEIGHT/2;
-                    let canvasBack = document.createElement('canvas');
-                    canvasBack.width = WIDTH/2;
-                    canvasBack.height = HEIGHT/2;
+                let index = 0;
+                for(const p of c.passives) {
+                    for(let i = 0; i < c.passiveProportion[index]; i++) {
+                        let canvas = document.createElement('canvas');
+                        canvas.width = WIDTH/2;
+                        canvas.height = HEIGHT/2;
+                        let canvasBack = document.createElement('canvas');
+                        canvasBack.width = WIDTH/2;
+                        canvasBack.height = HEIGHT/2;
 
-                    await mainDraw(canvas, canvasBack, [PC_CARDS[p],c.color], passive_drawCard);
-                    append(canvas);
-                    append(canvasBack);
+                        await mainDraw(canvas, canvasBack, [PC_CARDS[p],c.color], passive_drawCard);
+                        append(canvas);
+                        append(canvasBack);
+                    }
+                    index++;
                 }
-                index++;
+
+                index = 0;
+                for(const p of c.actives) {
+                    for(let i = 0; i < c.activeProportion[index]; i++) {
+                        let canvas = document.createElement('canvas');
+                        canvas.width = WIDTH/2;
+                        canvas.height = HEIGHT/2;
+                        let canvasBack = document.createElement('canvas');
+                        canvasBack.width = WIDTH/2;
+                        canvasBack.height = HEIGHT/2;
+
+                        await mainDraw(canvas, canvasBack, [AC_CARDS[p],c.color], active_drawCard);
+                        append(canvas);
+                        append(canvasBack);
+                    }
+                    index++;
+                }
             }
 
-            index = 0;
-            for(const p of c.actives) {
-                for(let i = 0; i < c.activeProportion[index]; i++) {
-                    let canvas = document.createElement('canvas');
-                    canvas.width = WIDTH/2;
-                    canvas.height = HEIGHT/2;
-                    let canvasBack = document.createElement('canvas');
-                    canvasBack.width = WIDTH/2;
-                    canvasBack.height = HEIGHT/2;
-
-                    await mainDraw(canvas, canvasBack, [AC_CARDS[p],c.color], active_drawCard);
-                    append(canvas);
-                    append(canvasBack);
-                }
-                index++;
+            for(let i=0; i < 10; i++) {
+                const canvas = await drawAdventurerTag(0,"#cd7f32","#a46628");
+                appendTag(canvas);
+            }
+            for(let i=0; i < 50; i++) {
+                const canvas = await drawAdventurerTag(1,"#cd7f32","#a46628");
+                appendTag(canvas);
             }
         }
+        
+        if(urlParams.size == 0 || urlParams.get('enemies') == 1) {
+            const enemiesMult1 = 10;
+            const enemiesMult2 = 15;
+            const enemiesConst = 25;
 
-        return;
+            const dices = [];
+            let a,b;
+            for(let i=0; i < enemiesMult1; i++) {
+                a = rand(1,5);
+                b = a+1;
+                dices.push(`${a} - ${b}`);
+            }
+            for(let i=0; i < enemiesMult2; i++) {
+                a = rand(1,4);
+                b = a+2;
+                dices.push(`${a} - ${b}`);
+            }
+            for(let i=0; i < enemiesConst; i++) {
+                a = rand(1,6);
+                dices.push(`${a}`);
+            }
+            shuffle(dices);
+            const perEnemie = Math.floor(dices.length/(ENEMIES.length-1));
+            const panter = ENEMIES[6];
+            for(const e of ENEMIES) {
+                if(e == panter)
+                    continue;
+                for(let i=0; i < perEnemie; i++) {
+                    if(dices.length == 0)
+                        break;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = WIDTH/2;
+                    canvas.height = HEIGHT/2;
+                    const canvasBack = document.createElement('canvas');
+                    canvasBack.width = WIDTH/2;
+                    canvasBack.height = HEIGHT/2;
 
-        for(const e of ENEMIES) {
-            const canvas = document.createElement('canvas');
-            canvas.width = WIDTH/2;
-            canvas.height = HEIGHT/2;
-            const canvasBack = document.createElement('canvas');
-            canvasBack.width = WIDTH/2;
-            canvasBack.height = HEIGHT/2;
+                    await mainDraw(canvas, canvasBack, [e,dices.splice(0,1)], enemy_drawCard);
+                    append(canvas);
+                    append(canvasBack);
+                }
+            }
+            for(let i=0; i < perEnemie; i++) {
+                if(dices.length == 0)
+                    break;
+                const canvas = document.createElement('canvas');
+                canvas.width = WIDTH/2;
+                canvas.height = HEIGHT/2;
+                const canvasBack = document.createElement('canvas');
+                canvasBack.width = WIDTH/2;
+                canvasBack.height = HEIGHT/2;
 
-            await mainDraw(canvas, canvasBack, e, enemy_drawCard);
-            append(canvas);
-            append(canvasBack);
+                a = rand(1,4);
+                b = a+rand(1,2);
+                await mainDraw(canvas, canvasBack, [panter,`${a} - ${b}`], enemy_drawCard);
+                append(canvas);
+                append(canvasBack);
+            }
+
+            for(let i=0; i < 6; i++) {
+                const canvas = await drawTag(1, "Mudo","#222","#0f0");
+                appendTag(canvas);
+            }
+            for(let i=0; i < 6; i++) {
+                const canvas = await drawTag(2, "Veneno","#222","#0f0");
+                appendTag(canvas);
+            }
+            for(let i=0; i < 10; i++) {
+                const canvas = await drawTag(0, "Efetividade","#222","#0f0");
+                appendTag(canvas);
+            }
         }
     });
 
-    async function mainDraw(cv, bcv, item, drawCall) {
-        return new Promise((result)=> {
-            scaleX = cv.width/WIDTH;
-            scaleY = cv.height/HEIGHT;
+async function mainDraw(cv, bcv, item, drawCall) {
+    return new Promise((result)=> {
+        scaleX = cv.width/WIDTH;
+        scaleY = cv.height/HEIGHT;
 
-            ctx = cv.getContext("2d");
+        ctx = cv.getContext("2d");
+        ctx.save();
+        ctx.scale(scaleX, scaleY);
+
+        if(bcv != null) {
+            ctx = bcv.getContext("2d");
             ctx.save();
             ctx.scale(scaleX, scaleY);
+        }
 
+        drawCall(item,cv, bcv)
+        .then(()=> {
+            ctx = cv.getContext("2d");
+            ctx.restore();
             if(bcv != null) {
                 ctx = bcv.getContext("2d");
-                ctx.save();
-                ctx.scale(scaleX, scaleY);
+                ctx.restore();
             }
 
-            drawCall(item,cv, bcv)
-            .then(()=> {
-                ctx = cv.getContext("2d");
-                ctx.restore();
-                if(bcv != null) {
-                    ctx = bcv.getContext("2d");
-                    ctx.restore();
-                }
-
-                result();
-            });
+            result();
         });
-    }
+    });
+}
 </script>

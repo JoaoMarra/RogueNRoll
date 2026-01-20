@@ -29,16 +29,16 @@ class EnemyDrawer {
 	draw(canvasToDraw,backCanvasToDraw) {
 		ctx = canvasToDraw.getContext("2d");
 		drawBorder(ENEMY_RED);
-		drawArt(SPRITE,ENEMY.spritePos,PLATE_HEIGHT-20);
+		drawArt(SPRITE,ENEMY[0].spritePos,PLATE_HEIGHT-20);
 		drawPlate(WIDTH/2-ART_RECT/2,WIDTH/2-ART_RECT/2,ART_RECT,'#C20000','#FE8700');
 		ctx.fillStyle = '#fff';
 		setFontSize(30);
 		const label = "INIMIGO";
 		ctx.fillText(label, WIDTH/2-ctx.measureText(label).width/2,WIDTH/2-ART_RECT/2+PLATE_HEIGHT/2+15);
-		const passive = ENEMY.passive != null? ENEMIES_PASSIVE[ENEMY.passive] : null;
-		this.drawDescription(ENEMY.description, passive);
-		this.drawName(ENEMY.name);
-		this.drawWeakness(this.randomWeakness());
+		const passive = ENEMY[0].passive != null? ENEMIES_PASSIVE[ENEMY[0].passive] : null;
+		this.drawDescription(ENEMY[0].description, passive);
+		this.drawName(ENEMY[0].name);
+		this.drawWeakness(ENEMY[1]);
 
 		ctx = backCanvasToDraw.getContext("2d");
 		drawBackBorder(ENEMY_RED);
