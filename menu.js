@@ -96,7 +96,7 @@ function menu_draw(context, delta) {
 	
 	const passives = context.innate.concat(Object.values(context.passiveCards));
 	passives.forEach((p,i)=>{
-		menuCtx.font="14px Arial";
+		setFontSize(14,menuCtx);
 		let line = Math.floor(i/perLine);
 		let x = 10 + Math.floor(i%perLine)*(passiveW+10);
 		y = 10+line*60;

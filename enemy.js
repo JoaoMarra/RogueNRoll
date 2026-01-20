@@ -177,7 +177,7 @@ function enemy_draw(ctx,x,y,e,context) {
 	ctx.fillStyle = BACKGROUND_COLOR;
 	ctx.fillRect(-ENEMY_WIDTH/2+2,-ENEMY_HEIGHT/2+22,ENEMY_WIDTH-4,ENEMY_HEIGHT-24);
 	ctx.fillStyle="white";
-	ctx.font="20px Arial";
+	setFontSize(20);
 	ctx.fillText(
 		e.min===e.max?e.min:`${e.min}-${e.max}`,
 		-ENEMY_WIDTH/2+4,-ENEMY_HEIGHT/2+20
@@ -185,7 +185,7 @@ function enemy_draw(ctx,x,y,e,context) {
 	e.data.draw(-ENEMY_WIDTH/2+2,-ENEMY_HEIGHT/2+22);
 	if(e.effect > 1) {
 		ctx.fillStyle="#a03";
-		ctx.font = "18px Arial";
+		setFontSize(18);
 		let label = `${e.effect}x`;
 		let measure = ctx.measureText(label);
 		ctx.beginPath();

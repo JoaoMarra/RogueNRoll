@@ -1,8 +1,16 @@
+@font-face {
+  font-family: 'pixel';
+  src: url('pixel.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 body {
   margin: 0;
   background: #111;
   overflow: hidden;
-  font-family: Arial, sans-serif;
+  font-family: 'pixel', monospace;
   color: white;
 }
 
@@ -34,4 +42,9 @@ canvas {
   flex-basis: calc(50% - 0.5rem);
   flex-grow:1;
   box-sizing: border-box;
+}
+
+textarea {
+  font-family: 'pixel', monospace;
+  font-size: 18px;
 }

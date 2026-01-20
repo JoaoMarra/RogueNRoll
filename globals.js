@@ -43,7 +43,7 @@ function breakText(text, width, font, color) {
 	virtualCanvas.width = Math.max(300,width);
 	virtualCanvas.height = Math.max(300,width);
 	let virtualCtx = virtualCanvas.getContext("2d");
-	virtualCtx.font=font;
+	setFontSize(font, virtualCtx);
 	virtualCtx.fillStyle = "#fff";
 
 	let space = virtualCtx.measureText(" ").width;

@@ -64,6 +64,10 @@
     }
     dCtx.drawImage(sheet,i*size,0,cutW,cutH,x,y,resW,resH);
   }
+
+  function setFontSize(size, dCtx=ctx) {
+        dCtx.font = `${size}px pixel`;
+    }
 </script>
 <script type="text/javascript" src="dice.js"></script>
 <script type="text/javascript" src="enemy.js"></script>
@@ -149,7 +153,7 @@
       }
     },
     { 
-      x:310,y:GAME_HEIGHT-BUTTON_HEIGHT,w:180,name:(context)=>`DEFENDER ${context.enemyRoll}`,status:()=>GAME_CONTEXT.phase.name==="enemy",
+      x:GAME_WIDTH/2-110,y:GAME_HEIGHT-BUTTON_HEIGHT,w:220,name:(context)=>`DEFENDER ${context.enemyRoll}`,status:()=>GAME_CONTEXT.phase.name==="enemy",
       color:'#c70a0a',
       effect:()=>{
         resolveEnemyTurn(GAME_CONTEXT)
@@ -622,7 +626,7 @@
     drawDice(DICE, ctx, contextToUse.calcValue, delta, canvas.width/2, canvas.height-BUTTON_H_SCALED);
 
     if(GAME_CONTEXT.rollValue) {
-      ctx.font="18px Arial";
+      setFontSize(18);
       ctx.fillStyle="#777";
       label=GAME_CONTEXT.rollValue;
       ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, canvas.height-55-BUTTON_H_SCALED);
@@ -641,12 +645,12 @@
     ctx.arc(lx, ly+size/2, size, 0, 2 * Math.PI);
     ctx.fill();
 
-    ctx.font="30px Arial";
+    setFontSize(30);
     ctx.fillStyle="#fff";
     let shieldLabel=GAME_CONTEXT.shield;
     let shieldW = ctx.measureText(shieldLabel).width;
     ctx.fillText(shieldLabel,lx-shieldW,ly+10);
-    ctx.font="15px Arial";
+    setFontSize(15);
     shieldLabel=`/${GAME_CONTEXT.maxShield}`;
     shieldW = ctx.measureText(shieldLabel).width;
     ctx.fillText(shieldLabel,lx,ly+10);
@@ -655,7 +659,7 @@
       ctx.fillStyle="#99e5e8";
       ctx.fillText(shieldLabel,lx+shieldW,ly+10);
     }
-    ctx.font="12px Arial";
+    setFontSize(12);
     ctx.fillStyle="#fff";
     shieldLabel="escudo";
     ctx.fillText(shieldLabel,lx-ctx.measureText(shieldLabel).width/2,ly+30);
@@ -670,14 +674,14 @@
     });
 
   // Phase label
-    ctx.font="20px Arial";
+    setFontSize(20);
     label = `[FASE ${GAME_CONTEXT.level}]`;
     ctx.fillText(label,canvas.width/2 - ctx.measureText(label).width/2,40);
-    ctx.font="22px Arial";
+    setFontSize(22);
     ctx.fillStyle="#f5f5f5";
     label=GAME_CONTEXT.phase.desc;
     ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, 60);
-    ctx.font="18px Arial";
+    setFontSize(18);
     ctx.fillStyle="#faefb6";
     label=SCORE;
     ctx.fillText(label, canvas.width/2 - ctx.measureText(label).width/2, 82);
@@ -691,11 +695,13 @@
 
   // GAME OVER
     if(GAME_CONTEXT.phase && GAME_CONTEXT.phase.name==="gameover") {
+      label = "GAME OVER";
+      setFontSize(40);
+      let measure = ctx.measureText(label).width;
       ctx.fillStyle="#000";
-      ctx.fillRect(canvas.width/2-140, canvas.height/2-40, 280, 50);
+      ctx.fillRect(canvas.width/2-(measure+20)/2, canvas.height/2-40, measure+20, 50);
       ctx.fillStyle="red";
-      ctx.font="40px Arial";
-      ctx.fillText("GAME OVER",canvas.width/2-120,canvas.height/2);
+      ctx.fillText(label,canvas.width/2-measure/2,canvas.height/2);
     }
 
   // DESCRIPTION
@@ -718,14 +724,14 @@
 
     ctx.fillRect(scaledX,scaledY,scaledW,scaledH);
     ctx.fillStyle="white";
-    ctx.font="16px Arial";
+    setFontSize(18);
     const label=btn.name(GAME_CONTEXT);
     ctx.fillText(label,scaledX + scaledW/2 - ctx.measureText(label).width/2, scaledY + scaledH/2 + 8);
   }
 
   function drawLabelDescription(description) {
     descriptionCtx.clearRect(0,0,descriptionCanvas.width,descriptionCanvas.height);
-    const labelImage = breakText(description.label, Math.max(100,canvas.width-description.x), "20px Arial", "#fff");
+    const labelImage = breakText(description.label, Math.max(100,canvas.width-description.x), 20, "#fff");
 
     if(description.x + labelImage.width+16 > canvas.width) {
       description.x = canvas.width-labelImage.width-16;
@@ -742,10 +748,10 @@
 
   function drawEnemyDescription(description) {
     descriptionCtx.clearRect(0,0,descriptionCanvas.width,descriptionCanvas.height);
-    const labelImage = breakText(description.enemy.name, Math.max(100,canvas.width-description.x), "20px Arial", "#fff");
+    const labelImage = breakText(description.enemy.name, Math.max(100,canvas.width-description.x), 20, "#fff");
     let passiveImage;
     if(description.enemy.passive != null) {
-      passiveImage = breakText(ENEMIES_PASSIVE[description.enemy.passive].description,Math.max(100,canvas.width-description.x), "16px Arial", "#fff");
+      passiveImage = breakText(ENEMIES_PASSIVE[description.enemy.passive].description,Math.max(100,canvas.width-description.x), 16, "#fff");
     }
     let width = labelImage.width+16;
     let height = labelImage.height+16;
@@ -769,7 +775,7 @@
     if(passiveImage) {
       descriptionCtx.fillStyle="#a03";
       descriptionCtx.fillRect(description.x, description.y+labelImage.height+16, width, passiveImage.height+36);
-      descriptionCtx.font = "20px Arial"
+      setFontSize(20,descriptionCtx);
       descriptionCtx.fillStyle="#fff";
       descriptionCtx.fillText(`[${ENEMIES_PASSIVE[description.enemy.passive].name}]`,description.x+8,description.y+labelImage.height+34);
       descriptionCtx.drawImage(passiveImage, description.x+8, description.y+labelImage.height+44);
@@ -778,8 +784,8 @@
 
   function drawAbnormalDescription(description) {
     descriptionCtx.clearRect(0,0,descriptionCanvas.width,descriptionCanvas.height);
-    const labelImage = breakText(description.abnormal.name, Math.max(100,canvas.width-description.x), "20px Arial", "#fff");
-    let passiveImage = breakText(description.abnormal.description,Math.max(100,canvas.width-description.x), "16px Arial", "#fff");
+    const labelImage = breakText(description.abnormal.name, Math.max(100,canvas.width-description.x), 20, "#fff");
+    let passiveImage = breakText(description.abnormal.description,Math.max(100,canvas.width-description.x), 16, "#fff");
     let width = labelImage.width+16;
     let height = labelImage.height+16;
     if(passiveImage != null) {
@@ -808,8 +814,8 @@
 
   function drawActiveCardDescription(description) {
     descriptionCtx.clearRect(0,0,descriptionCanvas.width,descriptionCanvas.height);
-    const labelImage = breakText(description.card.name, Math.max(100,canvas.width-description.x), "20px Arial", "#fff");
-    let passiveImage = breakText(description.card.description,Math.max(100,canvas.width-description.x), "16px Arial", "#fff");
+    const labelImage = breakText(description.card.name, Math.max(100,canvas.width-description.x), 20, "#fff");
+    let passiveImage = breakText(description.card.description,Math.max(100,canvas.width-description.x), 16, "#fff");
     let width = labelImage.width+16;
     let height = labelImage.height+16;
     if(passiveImage != null) {

@@ -29,7 +29,7 @@ function drawDice(dice, ctx, number, delta, x, y) {
 	ctx.fill();
 
 	const values = [1,2,3,4,5,6];
-	ctx.font="22px Arial";
+	setFontSize(22);
 	ctx.fillStyle="#000";
 	const angle = 360/values.length;
 
