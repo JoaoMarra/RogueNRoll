@@ -7,7 +7,7 @@ const DICE = {
 	'moveCount' : 0
 };
 
-function drawDice(dice, ctx, number, delta, x, y) {
+function drawDice(dice, ctx, number, delta, x, y,radius=50) {
 	if(number == null)
 		number = dice.currentValue;
 	if(dice.moveValue != number) {
@@ -25,7 +25,7 @@ function drawDice(dice, ctx, number, delta, x, y) {
 
 	ctx.fillStyle = "#fff";
 	ctx.beginPath();
-	ctx.arc(x, y, 50, 0, 2 * Math.PI);
+	ctx.arc(x, y, radius, 0, 2 * Math.PI);
 	ctx.fill();
 
 	const values = [1,2,3,4,5,6];
@@ -48,7 +48,7 @@ function drawDice(dice, ctx, number, delta, x, y) {
 	dice.values.forEach((v,i)=> {
 		ctx.save();
 		ctx.rotate(angle * i * Math.PI/180);
-		ctx.fillText(v,0-ctx.measureText(v).width/2,-25);
+		ctx.fillText(v,0-ctx.measureText(v).width/2,-radius/2);
 		ctx.restore();
 	});
 	ctx.restore();

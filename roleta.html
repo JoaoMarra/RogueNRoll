@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rogue N'Roll - Roleta</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <div style="position: relative;">
+    <div style="display: flex; flex-direction:column;">
+      <div style="position: relative;">
+        <canvas id="game"></canvas>
+
+        <div class="common-button" style="width: 50px;position: absolute; right: 80px;bottom: calc(50% - 30px);" onclick="changeValue(1)">+1</div>
+        <div class="common-button" style="width: 50px;position: absolute; right: 10px;bottom: calc(50% - 30px);" onclick="changeValue(2)">+2</div>
+
+        <div class="common-button" style="width: 50px;position: absolute; left: 80px;bottom: calc(50% - 30px);" onclick="changeValue(-1)">-1</div>
+        <div class="common-button" style="width: 50px;position: absolute; left: 10px;bottom: calc(50% - 30px);" onclick="changeValue(-2)">-2</div>
+        <div style="display:flex; position: absolute; bottom: 100px; left: calc(50% - 175px);">
+          <div class="common-button" style="width: 50px;margin-right: 10px;" onclick="setValue(1)">1</div>
+          <div class="common-button" style="width: 50px;margin-right: 10px" onclick="setValue(2)">2</div>
+          <div class="common-button" style="width: 50px;margin-right: 10px" onclick="setValue(3)">3</div>
+          <div class="common-button" style="width: 50px;margin-right: 10px" onclick="setValue(4)">4</div>
+          <div class="common-button" style="width: 50px;margin-right: 10px" onclick="setValue(5)">5</div>
+          <div class="common-button" style="width: 50px;" onclick="setValue(6)">6</div>
+      </div>
+    </div>
+  </div>
+</body>
+<script type="text/javascript" src="globals.js"></script>
+<script>
+  const FPS = 30;
+  const TICK_TIME = FPS/1000.0;
+  const BACKGROUND_COLOR = '#222'
+
+  function setFontSize(size, dCtx=ctx) {
+    dCtx.font = `${size}px pixel`;
+  }
+</script>
+<script type="text/javascript" src="dice.js"></script>
+<script>
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  canvas.style.backgroundColor = BACKGROUND_COLOR;
+
+  function resize() {
+    WINDOW_HEIGHT = window.innerHeight;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  var currentValue = 1;
+  function draw(delta) {
+    drawDice(DICE, ctx, currentValue, delta, canvas.width/2, canvas.height/2,Math.min(canvas.width/4,canvas.height/4));
+  }
+
+  var lastTime = null;
+  function loop() {
+    const timeNow = Date.now();
+    let timePass = 0;
+    if(lastTime != null) {
+      timePass = timeNow - lastTime;
+    }
+    lastTime = timeNow;
+    draw(timePass*TICK_TIME);
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  function changeValue(value) {
+    currentValue += value;
+    while(currentValue< 0) {
+      currentValue += 6;
+    }
+    currentValue %= 6;
+    if(currentValue == 0) {
+      currentValue = 6;
+    }
+  }
+
+  function setValue(value) {
+    currentValue = value;
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key >= "1" && event.key <= "9") {
+      currentValue = parseInt(event.key);
+    }
+  });
+</script>
