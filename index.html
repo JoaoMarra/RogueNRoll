@@ -961,4 +961,17 @@
     .limitToLast(10)
     .once("value");
   }
+
+  async function selfRanking() {
+      const user = firebase.auth().currentUser;
+      if (!user) return null;
+
+      const ref = await db.ref(`ranking/${user.uid}`).once("value");
+      if(ref != null && ref.val() != null) {
+        const value = {...ref.val(),'user':user.uid};
+
+        return value;
+      }
+      return null;
+  }
 </script>
