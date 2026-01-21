@@ -345,6 +345,7 @@
     logs.split("\n").forEach(l=>log(l));
 
     context.enemies = context.enemies.filter(e=>e.hp>0);
+    PREVIEW_CONTEXT = null;
 
     if(killed || context.enemies.length == 0) {
       endTurn(context);
