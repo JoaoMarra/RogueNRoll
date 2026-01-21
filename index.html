@@ -206,10 +206,10 @@
     // return {min:a,max:Math.min(b,6),hp:1,data:ENEMIES[9],block:false,effect:1};
     if (Math.random()<0.5) {
       const v=rand(1,6);
-      return {min:v,max:v,hp:1,data:ENEMIES[rand(0,ENEMIES.length-1)],block:false,effect:1};
+      return {min:v,max:v,hp:1,data:ENEMIES[rand(0,ENEMIES.length-1)],block:false,effect:1,blockKill:false};
     }
     let a=rand(1,5), b=rand(a+1,a+3);
-    return {min:a,max:Math.min(b,6),hp:1,data:ENEMIES[rand(0,ENEMIES.length-1)],block:false,effect:1};
+    return {min:a,max:Math.min(b,6),hp:1,data:ENEMIES[rand(0,ENEMIES.length-1)],block:false,effect:1,blockKill:false};
   }
 
   function spawnEnemies(context) {
@@ -313,6 +313,7 @@
 
     context.enemies.forEach(e=>{
       if(enemy_die(e,context)) {
+        context.passedTurn = true;
         e.hp=0;
         killed=true;
         context.turnKill += 1;
@@ -331,8 +332,6 @@
 
     SCORE += context.turnKill*context.level*(ENEMY_POINT*context.turnKill);
 
-    context.enemies = context.enemies.filter(e=>e.hp>0);
-
     logs = abnormal_apply(context, END_ATTACK);
     logs[1].split("\n").forEach(l=>log(l));
     if(logs[0]) {
@@ -345,9 +344,11 @@
     logs = abnormal_off(context, END_ATTACK);
     logs.split("\n").forEach(l=>log(l));
 
-    if(killed) {
+    context.enemies = context.enemies.filter(e=>e.hp>0);
+
+    if(killed || context.enemies.length == 0) {
       endTurn(context);
-      if(context.enemies.length===0) {
+      if(context.enemies.length == 0) {
         nextLevel(context);
       } else {
         positionsEnemies(context);
@@ -909,7 +910,13 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
 
+<script>
+  if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  }
+</script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBaPfwWFVAiyCuzGwlMHsYpqwbh2Nss9nU",
@@ -922,6 +929,11 @@
 
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
+  firebase.appCheck().activate(
+    "6Lcd5FEsAAAAAJRoe0arK_iLQMKvdQ6u26fikN8E",
+    true
+    );
+
 
   firebase.auth().signInAnonymously();
   const analytics = firebase.analytics();
@@ -963,15 +975,15 @@
   }
 
   async function selfRanking() {
-      const user = firebase.auth().currentUser;
-      if (!user) return null;
+    const user = firebase.auth().currentUser;
+    if (!user) return null;
 
-      const ref = await db.ref(`ranking/${user.uid}`).once("value");
-      if(ref != null && ref.val() != null) {
-        const value = {...ref.val(),'user':user.uid};
+    const ref = await db.ref(`ranking/${user.uid}`).once("value");
+    if(ref != null && ref.val() != null) {
+      const value = {...ref.val(),'user':user.uid};
 
-        return value;
-      }
-      return null;
+      return value;
+    }
+    return null;
   }
 </script>

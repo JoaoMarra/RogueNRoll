@@ -149,6 +149,9 @@ function enemy_die(e,context) {
 	if(context.calcValue == null)
 		return false
 	let passive = true;
+	if(e.hp == 0) {
+		return true;
+	}
 	if(e.data.passive && ENEMIES_PASSIVE[e.data.passive].time == ENEMY_DIE) {
 		passive = ENEMIES_PASSIVE[e.data.passive].apply(context, e);
 	}

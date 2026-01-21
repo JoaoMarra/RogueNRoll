@@ -46,6 +46,7 @@ function context_resetTurn(context) {
     context.shield = Math.min(context.shield, context.maxShield);
     context.enemies.forEach((e) => {
         e.block = false;
+        e.blockKill = false;
     });
     context.phase=GAME_PHASES[0];
     PREVIEW_CONTEXT = null;
@@ -150,6 +151,8 @@ function previewTurn(context) {
     const context2 = deepClone(context);
     if(context.calcValue != null) {
         context_applyCards(context2);
+        passive_apply(context2, END_ATTACK);
+        innate_apply(context2, END_ATTACK);
     }
     return context2;
 }

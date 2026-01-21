@@ -15,7 +15,7 @@ const CHARACTERS = [
 		description: "Ele luta pela justiça e a ordem como ninguém.",
 		shield: 4,
 		dice: [1,3,5],
-		innate: 7,//"escudo +1",
+		innate: 16,//"Impulso Lateral",
 		passives: [6,2,4],//["barreira +1","Par +1", "Par -1"],
 		passiveProportion: [4,3,3],
 		actives: [8,9,10,11],//bloqueios

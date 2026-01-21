@@ -193,6 +193,22 @@ const PC_CARDS = [
 		},
 		spritePos:7,
 		sprite:'p_escudoextra.png'
+	},
+	{
+		name:"Impulso Lateral", time:END_ATTACK, description: "Derrota inimigos bloqueados que tenham fraqueza menor ou maior que valor de ataque, máximo de fraqueza menor que valor de ataque ou mínimo de fraqueza maior que valor de ataque. Perde escudos na quantidade de inimigos derrotados por este método. Não evita o dano dos inimigos posteriormente", 
+		effect:(ctx,amount) => {
+			const toKill = ctx.enemies.filter(e=>e.block && (e.max < ctx.calcValue || e.min > ctx.calcValue));
+			if(toKill.length == 0) {
+				return `Nenhum inimigo atingido`;
+			}
+			toKill.forEach(e=>e.hp = 0);
+
+			const before = ctx.shield;
+			const after = context_addShield(ctx,-1 * toKill.length);
+			return `${toKill.length} atingidos, escudo ${before} - ${after}`;
+		},
+		spritePos:7,
+		sprite:'p_escudoextra.png'
 	}
 ]
 
