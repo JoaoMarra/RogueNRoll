@@ -48,3 +48,8 @@ textarea {
   font-family: 'pixel', monospace;
   font-size: 18px;
 }
+
+.ranking_row {
+  background: #444;
+  padding:10px;
+}

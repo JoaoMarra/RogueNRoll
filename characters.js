@@ -10,6 +10,7 @@ CHARACTERS_SPRITES.onload = function () {
 
 const CHARACTERS = [
 	{
+		pos:0,
 		name: "Paladino Ímpar",
 		description: "Ele luta pela justiça e a ordem como ninguém.",
 		shield: 4,
@@ -26,6 +27,7 @@ const CHARACTERS = [
 		color: '#FDFCEF'
 	},
 	{
+		pos:1,
 		name: "Mago Mediano",
 		description: "Nem o pior, nem o melhor.",
 		shield: 2,
@@ -42,6 +44,7 @@ const CHARACTERS = [
 		color: '#51A6FF'
 	},
 	{
+		pos:2,
 		name: "Atirador Cego",
 		description: "Ele não sabe como faz, mas acerta o alvo.",
 		shield: 2,
@@ -58,6 +61,7 @@ const CHARACTERS = [
 		color: '#14B400'
 	},
 	{
+		pos:3,
 		name: "Jogador Azarado",
 		description: "Consegue ganhar no azar.",
 		shield: 3,
@@ -74,6 +78,7 @@ const CHARACTERS = [
 		color: '#525252'
 	},
 	{
+		pos:4,
 		name: "Bispo Brigão",
 		description: "Ele enfrenta seus pecados no soco.",
 		shield: 3,

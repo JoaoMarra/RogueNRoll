@@ -23,12 +23,18 @@
       </canvas>
     </div>
     <canvas id="description_canvas" style="position:absolute; top:0; left:0; right: 0;bottom: 0;"></canvas>
+
     <div id="char_select" class="box-boder" style="position: absolute; top:20px; left: 20px; right: 20px; bottom: 20px;display: flex; flex-direction: column;">
       <h1 style="margin-left: 10px;">Selecione até 3 personagens</h1>
       <div id="char_select_inner" style="overflow: scroll;">
       </div>
-      <div class="common-button" style="margin-top:auto;width: calc(100% - 20px);margin-left: 10px;margin-bottom: 10px;" onclick="confirmCharacters()">Confirmar</div>
+      <div style="display: flex;margin-bottom: 10px;">
+        <div class="common-button" style="width: 50%;margin-left: 10px;" onclick="openHowTo()">Como jogar?</div>
+        <div class="common-button" style="width: 50%;margin-left: 10px;" onclick="openRanking()">Hall da fama</div>
+      </div>
+      <div class="common-button" style="margin-top:auto;width: calc(100% - 20px);margin-left: 10px;margin-bottom: 10px;" onclick="confirmCharacters()">Começar</div>
     </div>
+
     <div id="level_up" class="box-boder" style="position: absolute; top:20px; left: 20px; right: 20px; bottom: 20px;display: none;">
       <div style="display: flex; align-items: center;">
         <h1 style="margin-left: auto; margin-right: auto;">Novo nível alcançado!</h1>
@@ -36,6 +42,17 @@
       </div>
       <div id="level_up_content" style="overflow:scroll;">
       </div>
+    </div>
+
+    <div id="how_to" class="box-boder" style="position: absolute; top:20px; left: 20px; right: 20px; bottom: 20px;background: #222;display: none;">
+    </div>
+
+    <div id="hall_of_fame" class="box-boder" style="position: absolute; top:20px; left: 20px; right: 20px; bottom: 20px;background: #222;display: none;padding: 20px;">
+      <div style="display: flex; align-items: center;">
+        <h1 style="margin-left: auto;margin-right: auto;">Hall da Fama</h1>
+        <button style="background: transparent;width: 40px;height: 40px;color: #0f0;border: none;font-size: 22px;padding-right: 40px;" onclick="closeRanking()">X</button>
+      </div>
+      <div id="ranking_content" style="overflow: scroll;"></div>
     </div>
   </div>
 </body>
@@ -66,8 +83,8 @@
   }
 
   function setFontSize(size, dCtx=ctx) {
-        dCtx.font = `${size}px pixel`;
-    }
+    dCtx.font = `${size}px pixel`;
+  }
 </script>
 <script type="text/javascript" src="dice.js"></script>
 <script type="text/javascript" src="enemy.js"></script>
@@ -79,6 +96,8 @@
 <script type="text/javascript" src="menu.js"></script>
 <script type="text/javascript" src="char_select.js"></script>
 <script type="text/javascript" src="levelup.js"></script>
+<script type="text/javascript" src="how_to_loader.js"></script>
+<script type="text/javascript" src="hall_of_fame.js"></script>
 <script>
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
@@ -164,6 +183,13 @@
       color:'#444',
       effect:()=>{
         openMenu(GAME_CONTEXT);
+      }
+    },
+    { 
+      x:GAME_WIDTH/2-110,y:GAME_HEIGHT-BUTTON_HEIGHT,w:220,name:(context)=>"REINICIAR",status:()=>GAME_CONTEXT.phase.name==="gameover",
+      color:'#2a2',
+      effect:()=>{
+        location.reload(true);
       }
     }
   ]
@@ -362,11 +388,6 @@
 
     if(capableEnemies.length == 0) {
       log('Inimigos bloqueados');
-      if(context.passedTurn) {
-        const cards = context_renewCards(context,3);
-        log(`Nova carta ativa: ${cards}`);
-        positionActiveCards(context);
-      }
       endTurn(context);
       return;
     }
@@ -397,15 +418,18 @@
     const after = context_addShield(context,-context.enemyRoll);
     log(`Inimigo atacou com ${context.enemyRoll}: escudo ${before} - ${after}`);
 
+    if(!checkGameOver(context)) {
+      endTurn(context);
+    }
+  }
+
+  function endTurn(context) {
     if(context.passedTurn) {
       const cards = context_renewCards(context,3);
       log(`Nova carta ativa: ${cards}`);
       positionActiveCards(context);
     }
-    endTurn(context);
-  }
 
-  function endTurn(context) {
     let logs = enemy_pasive_apply(context, END_TURN_TIME);
     logs.split("\n").forEach(l=>log(l));
 
@@ -430,6 +454,8 @@
     if(context.shield <= 0) {
       log("GAME OVER");
       context.phase=GAME_PHASES[3];
+
+      salvarRank(SCORE);
       return true;
     }
     return false;
@@ -877,5 +903,59 @@
       charSelect.style.display = 'none';
       START_GAME(); 
     }
+  }
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBaPfwWFVAiyCuzGwlMHsYpqwbh2Nss9nU",
+    authDomain: "robguenroll.firebaseapp.com",
+    projectId: "robguenroll",
+    appId: "1:553039502742:web:c0c14333e5dbb993de51b7",
+    measurementId: "G-2T37SS1K1M",
+    databaseURL: "https://robguenroll-default-rtdb.firebaseio.com/"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+
+  firebase.auth().signInAnonymously();
+
+  const db = firebase.database();
+
+  function salvarRank(value) {
+    if(value > 0) {
+      const user = firebase.auth().currentUser;
+      if (!user) return;
+      
+      const ref = db.ref(`ranking/${user.uid}`);
+
+      ref.once("value").then((snapshot) => {
+        const data = snapshot.val();
+
+        if (data == null || value > data.score) {
+          const name = prompt("Digite seu nome:");
+          if(name != null) {
+            ref.update({
+              name: name,
+              score: value,
+              time:Date.now(),
+              characters: GAME_CONTEXT.characters.map(c => c.pos).join('_')
+            });
+          }
+        }
+      });
+    }
+  }
+
+  async function getRanking() {
+    return await firebase
+    .database()
+    .ref("ranking")
+    .orderByChild("score")
+    .limitToLast(10)
+    .once("value");
   }
 </script>
