@@ -313,7 +313,7 @@
 
     context.enemies.forEach(e=>{
       if(enemy_die(e,context)) {
-        context.passedTurn = true;
+        context.passedTurn = false;
         e.hp=0;
         killed=true;
         context.turnKill += 1;
@@ -354,6 +354,7 @@
         positionsEnemies(context);
       }
     } else {
+      positionsEnemies(context);
       enemyAttack(context);
     }
   }
