@@ -9,7 +9,6 @@
 body {
   margin: 0;
   background: #111;
-  overflow: hidden;
   font-family: 'pixel', monospace;
   color: white;
 }
@@ -52,4 +51,61 @@ textarea {
 .ranking_row {
   background: #444;
   padding:10px;
+}
+
+.container {
+  width: 100%;
+  padding-right: 15px; /* Adjust padding as needed */
+  padding-left: 15px;  /* Adjust padding as needed */
+  margin-right: auto;
+  margin-left: auto;
+  font-size: 22px;
+}
+
+.title {
+  color: #0f0;
+}
+
+.subtitle {
+  font-size: 30px;
+}
+
+.subtitle:before {
+    content:"\A";
+    width:10px;
+    height:10px;
+    margin-right:10px;
+    border-radius:50%;
+    background: #0f0;
+    display:inline-block;
+}
+
+@media (min-width: 576px) {
+  .container {
+    max-width: 540px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 992px) {
+  .container {
+    max-width: 960px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1140px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .container {
+    max-width: 1320px;
+  }
 }

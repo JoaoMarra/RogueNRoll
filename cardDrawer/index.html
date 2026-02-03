@@ -248,6 +248,7 @@
 
                 let index = 0;
                 for(const p of c.passives) {
+                    break;
                     for(let i = 0; i < c.passiveProportion[index]; i++) {
                         let canvas = document.createElement('canvas');
                         canvas.width = WIDTH/2;
@@ -265,6 +266,7 @@
 
                 index = 0;
                 for(const p of c.actives) {
+                    break;
                     for(let i = 0; i < c.activeProportion[index]; i++) {
                         let canvas = document.createElement('canvas');
                         canvas.width = WIDTH/2;
@@ -280,6 +282,7 @@
                     index++;
                 }
             }
+            return;
 
             for(let i=0; i < 10; i++) {
                 const canvas = await drawAdventurerTag(0,"#cd7f32","#a46628");

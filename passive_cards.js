@@ -143,7 +143,7 @@ const PC_CARDS = [
 		sprite:'p_compracarta.png'
 	},
 	{ 
-		name:"Contra Ataque", time:ROLL_TIME, description: "Caso tenha sido atingido pelos inimigos no turno anterior, o valor da rolagem após aplicação das cartas passivas, fica igual ao inimigo de menor fraqueza disponível.", 
+		name:"Contra Ataque", time:ROLL_TIME, description: "Caso tenha sido atingido pelos inimigos no turno anterior sem ter derrotado nenhum, o valor de ataque fica igual ao inimigo de menor fraqueza disponível.", 
 		effect:(ctx,amount) => {
 			if(ctx.lastEnemyRoll != null) {
 				const before = ctx.rollValue;
@@ -195,7 +195,7 @@ const PC_CARDS = [
 		sprite:'p_escudoextra.png'
 	},
 	{
-		name:"Impulso Lateral", time:END_ATTACK, description: "Derrota inimigos bloqueados que tenham fraqueza menor ou maior que valor de ataque, máximo de fraqueza menor que valor de ataque ou mínimo de fraqueza maior que valor de ataque. Perde escudos na quantidade de inimigos derrotados por este método. Não evita o dano dos inimigos posteriormente", 
+		name:"Impulso Lateral", time:END_ATTACK, description: "Inimigos bloqueados com fraqueza mínima maior ou fraqueza máxima menor que valor de ataque são derrotado. Perde um escudo para cada inimigo derrotado desta forma.", 
 		effect:(ctx,amount) => {
 			const toKill = ctx.enemies.filter(e=>e.block && (e.max < ctx.calcValue || e.min > ctx.calcValue));
 			if(toKill.length == 0) {
